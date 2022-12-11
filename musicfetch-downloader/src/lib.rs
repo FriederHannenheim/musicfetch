@@ -7,7 +7,10 @@ use std::process::{Command,Stdio};
 use std::error::Error;
 use std::io::{Write, Read};
 
+use spinners::{Spinner, Spinners};
+
 use musicfetch_common::Song;
+
 
 const YT_DLP_ARGS : [&str; 10] = [
     "-x",
@@ -20,12 +23,15 @@ const YT_DLP_ARGS : [&str; 10] = [
 ];
 
 pub fn get_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
+    let mut sp = Spinner::new(Spinners::Line, "Fetching Song/Playlist info".into());
     let json_output = Command::new("yt-dlp")
-        .arg("-j")
+        .arg("-J")
         .arg(&url)
         .stderr(Stdio::inherit())
         .output()?;
 
+    sp.stop_with_newline();
+    
     // Check if command ran correctly
     json_output.status.exit_ok()?;
     

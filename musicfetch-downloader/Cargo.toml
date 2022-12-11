@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 musicfetch-common = { path = "../musicfetch-common" }
+spinners = "4.1.0"
