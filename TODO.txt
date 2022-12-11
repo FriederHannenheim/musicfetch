@@ -1,1 +1,1 @@
-metadata correct? -> loop
+ncurses ui for tagging

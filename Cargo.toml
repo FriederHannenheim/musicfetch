@@ -1,14 +1,6 @@
-[package]
-name = "musicfetch"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-id3 = "1.5"
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-regex = "1.7"
-minreq = { version = "2.6.0", features = ["https", "punycode"] } 
-dialoguer = "*"
+members = [
+    "musicfetch-downloader",
+    "musicfetch-cli"
+]
