@@ -22,17 +22,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let yt_dlp_json = get_yt_dlp_json(&args.url)?;
 
-    // TODO: Clean Up
-    serde_json::from_str::<Playlist>(&yt_dlp_json)?;
     if let Ok(playlist) = serde_json::from_str::<Playlist>(&yt_dlp_json) {
         println!("Downloading playlist: {}", &playlist.title);
         for song_value in playlist.entries {
-            if let Ok(mut song) = serde_json::from_value::<Song>(song_value.clone()) {
-                println!("Downloading song: {}", &song.title);
-                song.artist = playlist.channel.clone();
-                song.album = playlist.title.clone();
-                download_and_tag_song(song, &serde_json::to_string(&song_value)?, &args.cover_url)?;
-            };
+            let song: Song = serde_json::from_value(song_value.clone())?;
+
+            println!("Downloading song: {}", &song.fulltitle);
+            
+            song.artist = playlist.channel.clone();
+            song.album = playlist.title.clone();
+            download_and_tag_song(song, &serde_json::to_string(&song_value)?, &args.cover_url)?;
         }
     }
     // Create YoutubeVideo struct from yt-dlp json
@@ -47,6 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn download_and_tag_song(mut song: Song, yt_dlp_json: &str, cover_url: &Option<String>) -> Result<(), Box<dyn Error>> {
+    println!("{:?}", &cover_url);
     download_song(&mut song, &yt_dlp_json)?;
     add_metadata(song, cover_url)?;
     Ok(())

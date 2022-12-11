@@ -11,7 +11,6 @@ use musicfetch_common::Song;
 
 pub fn add_metadata(mut song: Song, cover_url: &Option<String>) -> Result<(), Box<dyn Error>> {
     song.artist = song.artist.split(",").next().unwrap_or("").to_string();
-    println!("{:?}", &song);
 
     loop {
         metadata_prompt(&mut song)?;
