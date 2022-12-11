@@ -10,3 +10,4 @@ musicfetch-downloader = { path = "../musicfetch-downloader" }
 musicfetch-tagger = { path = "../musicfetch-tagger" }
 musicfetch-common = { path = "../musicfetch-common" }
 clap = {version = "4.0", features = ["derive"] }
+serde_json = "1.0"

@@ -300,6 +300,7 @@ dependencies = [
  "musicfetch-common",
  "musicfetch-downloader",
  "musicfetch-tagger",
+ "serde_json",
 ]
 
 [[package]]
@@ -314,8 +315,6 @@ name = "musicfetch-downloader"
 version = "0.1.0"
 dependencies = [
  "musicfetch-common",
- "serde",
- "serde_json",
 ]
 
 [[package]]

@@ -7,8 +7,6 @@ use std::process::{Command,Stdio};
 use std::error::Error;
 use std::io::{Write, Read};
 
-use serde::{Deserialize, Serialize};
-
 use musicfetch_common::Song;
 
 const YT_DLP_ARGS : [&str; 10] = [
@@ -21,20 +19,20 @@ const YT_DLP_ARGS : [&str; 10] = [
 
 ];
 
-pub fn download_song(song_url: &str) -> Result<Song, Box<dyn Error>> {
+pub fn get_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
     let json_output = Command::new("yt-dlp")
         .arg("-j")
-        .arg(&song_url)
+        .arg(&url)
         .stderr(Stdio::inherit())
         .output()?;
 
     // Check if command ran correctly
     json_output.status.exit_ok()?;
     
-    let yt_dlp_json = str::from_utf8(&json_output.stdout)?;
-    // Create YoutubeVideo struct from yt-dlp json
-    let mut song: Song = serde_json::from_str(yt_dlp_json).expect("error parsing youtube video json");
+    Ok(String::from_utf8(json_output.stdout)?)
+}
 
+pub fn download_song(song: &mut Song, yt_dlp_json: &str) -> Result<(), Box<dyn Error>> {
     // Download song
     let mut download_process = Command::new("yt-dlp")
         .args(&YT_DLP_ARGS)
@@ -49,7 +47,7 @@ pub fn download_song(song_url: &str) -> Result<Song, Box<dyn Error>> {
     // Get path of downloaded file
     song.filename = get_downloaded_filename(&yt_dlp_json)?;
 
-    Ok(song)
+    Ok(())
 }
 
 fn get_downloaded_filename(yt_dlp_json: &str) -> Result<String,Box<dyn Error>> {
