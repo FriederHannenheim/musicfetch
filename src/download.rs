@@ -1,6 +1,3 @@
-#![feature(let_else)]
-#![feature(exit_status_error)]
-
 use std::str;
 use std::process::{Command,Stdio};
 use std::error::Error;
@@ -8,7 +5,7 @@ use std::io::{Write, Read};
 
 use spinners::{Spinner, Spinners};
 
-use musicfetch_common::Song;
+use crate::structs::Song;
 
 
 const YT_DLP_ARGS : [&str; 10] = [

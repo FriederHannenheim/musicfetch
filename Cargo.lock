@@ -303,38 +303,13 @@ name = "musicfetch-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
- "id3",
- "musicfetch-common",
- "musicfetch-downloader",
- "musicfetch-tagger",
- "serde_json",
-]
-
-[[package]]
-name = "musicfetch-common"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "musicfetch-downloader"
-version = "0.1.0"
-dependencies = [
- "musicfetch-common",
- "spinners",
-]
-
-[[package]]
-name = "musicfetch-tagger"
-version = "0.1.0"
-dependencies = [
  "dialoguer",
  "id3",
  "minreq",
- "musicfetch-common",
  "regex",
+ "serde",
+ "serde_json",
+ "spinners",
 ]
 
 [[package]]

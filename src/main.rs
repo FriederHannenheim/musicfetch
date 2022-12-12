@@ -1,3 +1,6 @@
+#![feature(let_else)]
+#![feature(exit_status_error)]
+
 use std::error::Error;
 use std::path::PathBuf;
 use std::fs::File;
@@ -5,11 +8,15 @@ use std::io::Read;
 
 use clap::Parser;
 
-use musicfetch_common::{Song, Playlist};
-use musicfetch_downloader::{get_yt_dlp_json, download_song};
-use musicfetch_tagger::{add_metadata, fetch_cover_image};
+use crate::structs::{Song, Playlist};
+use crate::download::{get_yt_dlp_json, download_song};
+use crate::tagging::{add_metadata, fetch_cover_image};
 
 use id3::frame::Picture;
+
+mod structs;
+mod download;
+mod tagging;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

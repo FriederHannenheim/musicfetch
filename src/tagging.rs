@@ -7,7 +7,7 @@ use id3::frame::{Picture, PictureType};
 
 use dialoguer::{Input, Confirm};
 
-use musicfetch_common::Song;
+use crate::structs::Song;
 
 pub fn add_metadata(mut song: Song, cover: Option<Picture>) -> Result<(), Box<dyn Error>> {
     song.artist = song.artist.split(",").next().unwrap_or("").to_string();
