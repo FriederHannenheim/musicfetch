@@ -1,7 +1,6 @@
 #![feature(let_else)]
 #![feature(exit_status_error)]
 
-use std::env;
 use std::str;
 use std::process::{Command,Stdio};
 use std::error::Error;
@@ -23,7 +22,7 @@ const YT_DLP_ARGS : [&str; 10] = [
 ];
 
 pub fn get_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
-    let mut sp = Spinner::new(Spinners::Line, "Fetching Song/Playlist info".into());
+    let mut sp = Spinner::new(Spinners::Line, "Fetching Song/Playlist info. For playlists this can take a while depending on your internet speed.".into());
     let json_output = Command::new("yt-dlp")
         .arg("-J")
         .arg(&url)

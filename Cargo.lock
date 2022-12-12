@@ -303,6 +303,7 @@ name = "musicfetch-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "id3",
  "musicfetch-common",
  "musicfetch-downloader",
  "musicfetch-tagger",

@@ -2,14 +2,14 @@ use std::error::Error;
 
 use regex::Regex;
 
-use id3::{Tag, TagLike, Version, Frame, Content};
+use id3::{Tag, TagLike, Version};
 use id3::frame::{Picture, PictureType};
 
 use dialoguer::{Input, Confirm};
 
 use musicfetch_common::Song;
 
-pub fn add_metadata(mut song: Song, cover_url: &Option<String>) -> Result<(), Box<dyn Error>> {
+pub fn add_metadata(mut song: Song, cover: Option<Picture>) -> Result<(), Box<dyn Error>> {
     song.artist = song.artist.split(",").next().unwrap_or("").to_string();
 
     loop {
@@ -29,9 +29,8 @@ pub fn add_metadata(mut song: Song, cover_url: &Option<String>) -> Result<(), Bo
     tag.set_track(song.track_no.unwrap());
     tag.set_total_tracks(song.total_tracks.unwrap());
 
-    if let Some(url) = cover_url {
-        println!("Downloading cover image...");
-        add_image_to_tag(&mut tag, &url)?;
+    if let Some(picture) = cover {
+        tag.add_frame(picture);
     }
     
     println!("Adding metadata to {}", &song.filename);
@@ -40,20 +39,27 @@ pub fn add_metadata(mut song: Song, cover_url: &Option<String>) -> Result<(), Bo
     Ok(())
 }
 
-fn add_image_to_tag(tag: &mut Tag, url: &str) -> Result<(), Box<dyn Error>> {
-    let file_extension_re = Regex::new(r"\.(\w{3,4})(?:$|\?)")?;
-    let file_extension = file_extension_re.find(url).unwrap().as_str();
-    
-    let resp = minreq::get(url).send().expect("Sending http request for cover image failed");
+pub fn fetch_cover_image(url: &str) -> Picture {
+    println!("Downloading cover image...");
 
-    tag.add_frame(Picture{
-        mime_type: file_extension.to_owned(),
+    let resp = minreq::get(url).send().expect("Sending http request for cover image failed");
+    let mime_type = get_mime_type(url).expect("Failed to find file extension in cover url. Make sure it is a valid image url");
+
+    Picture {
+        mime_type: mime_type,
         picture_type: PictureType::CoverFront,
         description: "Cover".to_owned(),
         data: resp.as_bytes().into(),
-    });
+    }
+}
 
-    Ok(())
+// TODO: check if file extension is an image
+fn get_mime_type(url: &str) -> Option<String> {
+    let re = Regex::new(r"\.(\w{3,4})(?:$|\?)").unwrap();
+    let captures = re.captures(url)?;
+    let file_extension = captures.get(1)?.as_str();
+
+    Some(format!("image/{}", file_extension))
 }
 
 fn metadata_prompt(song: &mut Song) -> Result<(), Box<dyn Error>> {

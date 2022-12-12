@@ -1,9 +1,5 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize};
 use serde_json::Value;
-
-use crate::serde_helper::deserialize_null_default;
-
-mod serde_helper;
 
 #[derive(Debug, Deserialize)]
 pub struct Song {
@@ -21,7 +17,7 @@ pub struct Song {
     pub artist: String,
     #[serde(default)]
     pub release_year: Option<i32>,
-    #[serde(default)]
+    #[serde(skip)]
     pub genre: String,
     #[serde(skip)]
     pub track_no: Option<u32>,
