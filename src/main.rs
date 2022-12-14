@@ -21,7 +21,7 @@ use id3::frame::{Picture, PictureType};
 
 use regex::Regex;
 
-use dialoguer::Input;
+use dialoguer::{Input, Confirm};
 
 mod structs;
 mod download;
@@ -114,7 +114,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let cover_image = args.cover_url.as_ref().map(|url| fetch_cover_image(&url));
 
-    complete_song_metadata(&mut songs, &args)?;
+    loop {
+        println!("\nInput album metadata:");
+        complete_song_metadata(&mut songs, &args)?;
+        if Confirm::new().with_prompt("Metadata correct?").default(true).interact()? {
+            break;
+        }
+    }
 
     for mut song in songs {
         song = tag_song(song, cover_image.clone())?;
