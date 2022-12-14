@@ -36,8 +36,10 @@ fn add_metadata_to_tag(metadata: &SongMetadata, tag: &mut Tag) {
     if let Some(album) = &metadata.album { tag.set_album(album); }
     if let Some(year) = metadata.year { tag.set_year(year); }
     if let Some(artist) = &metadata.artist { tag.set_artist(artist); }
-    if let Some(track_no) = metadata.track_no && tag.track().is_some() { tag.set_track(track_no); }
-    if let Some(total_tracks) = metadata.total_tracks && tag.total_tracks().is_some() { tag.set_total_tracks(total_tracks); }
+
+    // If the tag already has track_no/total_tracks ignore the generated one
+    if let Some(track_no) = metadata.track_no && !tag.track().is_some() { tag.set_track(track_no); }
+    if let Some(total_tracks) = metadata.total_tracks && !tag.total_tracks().is_some() { tag.set_total_tracks(total_tracks); }
 }
 
 fn metadata_prompt(tag: &mut Tag) -> Result<(), Box<dyn Error>> {
