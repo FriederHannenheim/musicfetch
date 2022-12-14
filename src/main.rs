@@ -120,7 +120,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         song = tag_song(song, cover_image.clone())?;
 
         if args.rename {
-            let out_path = format!("{}{}", &args.output_dir, song.tag.unwrap().title().unwrap());
+            // TODO: Currently all files are mp3 but in future this should not be hardcoded
+            let out_path = format!("{}{}.mp3", &args.output_dir, song.tag.unwrap().title().unwrap());
             fs::copy(&song.path, &out_path)?;
             fs::remove_file(&song.path)?;
         }
