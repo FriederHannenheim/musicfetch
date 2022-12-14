@@ -1,5 +1,8 @@
 # Musicfetch
-Musicfetch is a YouTube music downloader which allows you to interactively tag your music
+Musicfetch is a YouTube music downloader which allows you to interactively tag your music.
+
+This crate uses many experimental features because I like living on the edge and thus can only compiled with the nightly toolchain.
+
 ## Usage
     musicfetch VIDEO_URL [COVER_URL]
 ## Dependencies

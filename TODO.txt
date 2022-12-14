@@ -1,1 +1,4 @@
 ncurses ui for tagging
+support stdin for --yt-dlp-json
+man page
+--yes -y don't ask for input accept all
