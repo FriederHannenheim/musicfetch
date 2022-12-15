@@ -27,7 +27,7 @@ mod structs;
 mod download;
 mod tagging;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Default, Eq, PartialEq)]
 #[command(author, version, about, long_about = None)]
 #[command(group(
     ArgGroup::new("song")
@@ -201,4 +201,46 @@ fn get_mime_type(url: &str) -> Option<String> {
     let file_extension = captures.get(1)?.as_str();
 
     Some(format!("image/{}", file_extension))
+}
+
+#[test]
+fn test_arg_matching() {
+    assert_eq!(
+        Args::parse_from(
+            ["musicfetch", "-a", "--no-rename", "-f", "file1", "file2", "file3"]
+        ), 
+        Args { 
+            files: vec![
+                PathBuf::from("file1"), PathBuf::from("file2"), PathBuf::from("file3")
+            ], 
+            album: true, 
+            output_dir: "./".to_owned(),
+            ..default()
+        }
+    );
+    
+    assert_eq!(
+        Args::parse_from(
+            ["musicfetch", "--rename", "--no-rename", "ytsearch:test me I dare you"]
+        ),
+        Args {
+            url: Some("ytsearch:test me I dare you".to_owned()),
+            output_dir: "./".to_owned(),
+            ..default()
+        }
+    );
+
+    assert_eq!(
+        Args::parse_from(
+            ["musicfetch", "--no-rename", "--rename", "-j", "playlist_json", "-c", "cover_url"]
+        ),
+        Args {
+            output_dir: "./".to_owned(),
+            rename: true,
+            _no_rename: true,
+            yt_dlp_json: Some(PathBuf::from("playlist_json")),
+            cover_url: Some("cover_url".to_owned()),
+            ..default()
+        }
+    );
 }
