@@ -10,7 +10,7 @@ use std::fs::File;
 use std::io::Read;
 use std::default::default;
 
-use clap::{Parser, ArgGroup, ArgAction};
+use clap::{Parser, ArgGroup, ArgAction, builder::ArgPredicate};
 
 use crate::structs::{Song, Playlist, SongMetadata, AlbumMetadata};
 use crate::download::{fetch_yt_dlp_json, download_song};
@@ -50,9 +50,8 @@ struct Args {
     #[arg(short, long)]
     cover_url: Option<String>,
 
-
     // Enable album mode. Artist, Album, Year, Genre will be queried at the start and set for all tracks. 
-    // Track Number and Total Tracks will be set automatically
+    // Track Number and Total Tracks will be set automatically.
     #[arg(short, long)]
     album: bool,
 
@@ -60,7 +59,7 @@ struct Args {
     output_dir: String,
 
     // Don't rename songs
-    #[clap(long = "no-rename", action = ArgAction::SetFalse)]
+    #[clap(long = "no-rename", action = ArgAction::SetFalse, default_value_if("files", ArgPredicate::IsPresent, Some("false")))]
     rename: bool,
 
     // Rename songs to their titles [default]
@@ -161,11 +160,17 @@ fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<
             Input::new()
                 .with_prompt("Year")
                 .interact_text()?;
+        let genre: String = 
+            Input::new()
+                .with_prompt("Genre")
+                .allow_empty(true)
+                .interact_text()?;
         
         let album_metadata = AlbumMetadata {
             album_title: album_title,
             artist: artist,
             year: year,
+            genre: if genre.len() > 0 { Some(genre) } else { None },
         };
 
         let song_count = songs.len();
@@ -207,7 +212,7 @@ fn get_mime_type(url: &str) -> Option<String> {
 fn test_arg_matching() {
     assert_eq!(
         Args::parse_from(
-            ["musicfetch", "-a", "--no-rename", "-f", "file1", "file2", "file3"]
+            ["musicfetch", "-a", "-f", "file1", "file2", "file3"]
         ), 
         Args { 
             files: vec![

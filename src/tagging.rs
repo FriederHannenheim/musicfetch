@@ -34,8 +34,9 @@ pub fn tag_song(mut song: Song, cover: Option<Picture>) -> Result<Song, Box<dyn 
 fn add_metadata_to_tag(metadata: &SongMetadata, tag: &mut Tag) {
     if let Some(title) = &metadata.title { tag.set_title(title); }
     if let Some(album) = &metadata.album { tag.set_album(album); }
-    if let Some(year) = metadata.year { tag.set_year(year); }
     if let Some(artist) = &metadata.artist { tag.set_artist(artist); }
+    if let Some(year) = metadata.year { tag.set_year(year); }
+    if let Some(genre) = &metadata.genre { tag.set_genre(genre); }
 
     // If the tag already has track_no/total_tracks ignore the generated one
     if let Some(track_no) = metadata.track_no && !tag.track().is_some() { tag.set_track(track_no); }

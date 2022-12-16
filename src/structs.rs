@@ -26,6 +26,8 @@ pub struct SongMetadata {
     #[serde(default, rename="release_year")]
     pub year: Option<i32>,
     #[serde(skip)]
+    pub genre: Option<String>,
+    #[serde(skip)]
     pub track_no: Option<u32>,
     #[serde(skip)]
     pub total_tracks: Option<u32>,
@@ -36,6 +38,7 @@ impl SongMetadata {
         self.album = Some(album_metadata.album_title);
         self.artist = Some(album_metadata.artist);
         self.year = Some(album_metadata.year);
+        self.genre = album_metadata.genre;
     }
 }
 
@@ -44,6 +47,7 @@ pub struct AlbumMetadata {
     pub album_title: String,
     pub artist: String,
     pub year: i32,
+    pub genre: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
