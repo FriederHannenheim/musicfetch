@@ -42,7 +42,7 @@ struct Args {
     #[arg(short, long, num_args = 1..)]
     files: Vec<PathBuf>,
     
-    // yt-dlp json to download
+    // Path to read yt-dlp json from or "-" for stdin
     #[arg(short = 'j', long, value_name = "FILE")]
     yt_dlp_json: Option<PathBuf>,
 
@@ -67,15 +67,27 @@ struct Args {
     _no_rename: bool,
 }
 
+impl Args {
+    fn hyphen_stdin(mut self) -> Self {
+        self.yt_dlp_json = self.yt_dlp_json.map(|path| {
+            match path.to_str() {
+                Some("-") => PathBuf::from("/dev/stdin"),
+                _ => path,
+            }
+        });
+        self
+    }
+}
+
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let args = Args::parse();
+    let args = Args::parse().hyphen_stdin();
 
     let mut songs: Vec<Song> = vec![];
 
     if args.yt_dlp_json.is_some() || args.url.is_some() {
         let yt_dlp_json = get_yt_dlp_json(&args)?;
-        // TODO: Load Tag so previously tagged files will keep their data
+        
         if let Ok(playlist) = serde_json::from_str::<Playlist>(&yt_dlp_json) {
             for song_entry in playlist.entries {
                 let metadata: SongMetadata = serde_json::from_value(song_entry.clone())?;
