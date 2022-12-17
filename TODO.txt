@@ -3,5 +3,6 @@ man page
 --yes -y don't ask for input accept all
 clean up a bit
 Add option to pull title from youtube title
-Add option to add total tracks through album metadata since sometimes the playlists have videos that
-don't belong
+Add option to add total tracks through album metadata since sometimes the playlists have videos that don't belong
+retain AlbumMetadata if isn't correct (Prompt)
+Sanitize Title before moving file. (Also remember to remove any leading dots)

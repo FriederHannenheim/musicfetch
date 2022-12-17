@@ -1,4 +1,3 @@
-#![feature(let_else)]
 #![feature(exit_status_error)]
 #![feature(default_free_fn)]
 #![feature(let_chains)]

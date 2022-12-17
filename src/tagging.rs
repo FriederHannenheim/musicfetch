@@ -17,7 +17,7 @@ pub fn tag_song(mut song: Song, cover: Option<Picture>) -> Result<Song, Box<dyn 
     }
 
     loop {
-        println!("\nMetadata for {}", &song.path.display());
+        println!("\n{}", &song.path.display());
         metadata_prompt(&mut tag)?;
         if Confirm::new()
             .with_prompt("Metadata correct?")
@@ -27,7 +27,8 @@ pub fn tag_song(mut song: Song, cover: Option<Picture>) -> Result<Song, Box<dyn 
             break;
         }
     }
-
+    
+    println!("{:?}", &song.path);
     tag.write_to_path(&song.path, Version::Id3v23)
         .expect("Writing Id3 tag failed");
 

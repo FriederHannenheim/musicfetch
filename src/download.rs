@@ -58,7 +58,7 @@ fn get_downloaded_filename(yt_dlp_json: &str) -> Result<String, Box<dyn Error>> 
 
     let mut filename_process = Command::new("yt-dlp")
         .args(&YT_DLP_ARGS)
-        .args(["--load-info-json", "-", "-O", "after_move:filepath"])
+        .args(["--load-info-json", "-", "-q", "-O", "after_move:filepath"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;
