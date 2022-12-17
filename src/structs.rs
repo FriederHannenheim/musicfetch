@@ -14,14 +14,10 @@ pub struct Song {
 
 #[derive(Debug, Deserialize, Default)]
 pub struct SongMetadata {
-    pub channel: String,
-    pub description: String,
     pub fulltitle: String,
-    #[serde(default, rename = "track")]
+    #[serde(rename = "track")]
     pub title: Option<String>,
-    #[serde(default)]
     pub album: Option<String>,
-    #[serde(default)]
     pub artist: Option<String>,
     #[serde(default, rename = "release_year")]
     pub year: Option<i32>,
@@ -31,6 +27,8 @@ pub struct SongMetadata {
     pub track_no: Option<u32>,
     #[serde(skip)]
     pub total_tracks: Option<u32>,
+    pub channel: Option<String>,
+    pub description: Option<String>,
 }
 
 impl SongMetadata {
