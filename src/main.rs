@@ -3,28 +3,28 @@
 #![feature(default_free_fn)]
 #![feature(let_chains)]
 
+use std::default::default;
 use std::error::Error;
-use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
-use std::default::default;
+use std::path::PathBuf;
 
-use clap::{Parser, ArgGroup, ArgAction, builder::ArgPredicate};
+use clap::{builder::ArgPredicate, ArgAction, ArgGroup, Parser};
 
-use crate::structs::{Song, Playlist, SongMetadata, AlbumMetadata};
-use crate::download::{fetch_yt_dlp_json, download_song};
+use crate::download::{download_song, fetch_yt_dlp_json};
+use crate::structs::{AlbumMetadata, Playlist, Song, SongMetadata};
 use crate::tagging::tag_song;
 
-use id3::{Tag, TagLike};
 use id3::frame::{Picture, PictureType};
+use id3::{Tag, TagLike};
 
 use regex::Regex;
 
-use dialoguer::{Input, Confirm};
+use dialoguer::{Confirm, Input};
 
-mod structs;
 mod download;
+mod structs;
 mod tagging;
 
 #[derive(Parser, Debug, Default, Eq, PartialEq)]
@@ -41,7 +41,7 @@ struct Args {
     // Instead of downloading, tag these local files. Implies --no-rename
     #[arg(short, long, num_args = 1..)]
     files: Vec<PathBuf>,
-    
+
     // Path to read yt-dlp json from or "-" for stdin
     #[arg(short = 'j', long, value_name = "FILE")]
     yt_dlp_json: Option<PathBuf>,
@@ -50,7 +50,7 @@ struct Args {
     #[arg(short, long)]
     cover_url: Option<String>,
 
-    // Enable album mode. Artist, Album, Year, Genre will be queried at the start and set for all tracks. 
+    // Enable album mode. Artist, Album, Year, Genre will be queried at the start and set for all tracks.
     // Track Number and Total Tracks will be set automatically.
     #[arg(short, long)]
     album: bool,
@@ -69,16 +69,13 @@ struct Args {
 
 impl Args {
     fn hyphen_stdin(mut self) -> Self {
-        self.yt_dlp_json = self.yt_dlp_json.map(|path| {
-            match path.to_str() {
-                Some("-") => PathBuf::from("/dev/stdin"),
-                _ => path,
-            }
+        self.yt_dlp_json = self.yt_dlp_json.map(|path| match path.to_str() {
+            Some("-") => PathBuf::from("/dev/stdin"),
+            _ => path,
         });
         self
     }
 }
-
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse().hyphen_stdin();
@@ -87,14 +84,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if args.yt_dlp_json.is_some() || args.url.is_some() {
         let yt_dlp_json = get_yt_dlp_json(&args)?;
-        
+
         if let Ok(playlist) = serde_json::from_str::<Playlist>(&yt_dlp_json) {
             for song_entry in playlist.entries {
                 let metadata: SongMetadata = serde_json::from_value(song_entry.clone())?;
                 let json = serde_json::to_string(&song_entry)?;
                 let path = download_song(&json, &args.output_dir)?;
                 let tag = Tag::read_from_path(&path).ok();
-                
+
                 songs.push(Song {
                     path: path.into(),
                     tag: tag,
@@ -128,7 +125,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     loop {
         println!("\nInput album metadata:");
         complete_song_metadata(&mut songs, &args)?;
-        if Confirm::new().with_prompt("Metadata correct?").default(true).interact()? {
+        if Confirm::new()
+            .with_prompt("Metadata correct?")
+            .default(true)
+            .interact()?
+        {
             break;
         }
     }
@@ -138,7 +139,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if args.rename {
             // TODO: Currently all files are mp3 but in future this should not be hardcoded
-            let out_path = format!("{}{}.mp3", &args.output_dir, song.tag.unwrap().title().unwrap());
+            let out_path = format!(
+                "{}{}.mp3",
+                &args.output_dir,
+                song.tag.unwrap().title().unwrap()
+            );
             fs::copy(&song.path, &out_path)?;
             fs::remove_file(&song.path)?;
         }
@@ -160,24 +165,14 @@ fn get_yt_dlp_json(args: &Args) -> Result<String, Box<dyn Error>> {
 
 fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<dyn Error>> {
     if args.album {
-        let album_title: String = 
-            Input::new()
-                .with_prompt("Album Title")
-                .interact_text()?;
-        let artist: String = 
-            Input::new()
-                .with_prompt("Artist")
-                .interact_text()?;
-        let year: i32 = 
-            Input::new()
-                .with_prompt("Year")
-                .interact_text()?;
-        let genre: String = 
-            Input::new()
-                .with_prompt("Genre")
-                .allow_empty(true)
-                .interact_text()?;
-        
+        let album_title: String = Input::new().with_prompt("Album Title").interact_text()?;
+        let artist: String = Input::new().with_prompt("Artist").interact_text()?;
+        let year: i32 = Input::new().with_prompt("Year").interact_text()?;
+        let genre: String = Input::new()
+            .with_prompt("Genre")
+            .allow_empty(true)
+            .interact_text()?;
+
         let album_metadata = AlbumMetadata {
             album_title: album_title,
             artist: artist,
@@ -200,8 +195,11 @@ fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<
 pub fn fetch_cover_image(url: &str) -> Picture {
     println!("Downloading cover image...");
 
-    let resp = minreq::get(url).send().expect("Sending http request for cover image failed");
-    let mime_type = get_mime_type(url).expect("Failed to find file extension in cover url. Make sure it is a valid image url");
+    let resp = minreq::get(url)
+        .send()
+        .expect("Sending http request for cover image failed");
+    let mime_type = get_mime_type(url)
+        .expect("Failed to find file extension in cover url. Make sure it is a valid image url");
 
     Picture {
         mime_type: mime_type,
@@ -223,23 +221,26 @@ fn get_mime_type(url: &str) -> Option<String> {
 #[test]
 fn test_arg_matching() {
     assert_eq!(
-        Args::parse_from(
-            ["musicfetch", "-a", "-f", "file1", "file2", "file3"]
-        ), 
-        Args { 
+        Args::parse_from(["musicfetch", "-a", "-f", "file1", "file2", "file3"]),
+        Args {
             files: vec![
-                PathBuf::from("file1"), PathBuf::from("file2"), PathBuf::from("file3")
-            ], 
-            album: true, 
+                PathBuf::from("file1"),
+                PathBuf::from("file2"),
+                PathBuf::from("file3")
+            ],
+            album: true,
             output_dir: "./".to_owned(),
             ..default()
         }
     );
-    
+
     assert_eq!(
-        Args::parse_from(
-            ["musicfetch", "--rename", "--no-rename", "ytsearch:test me I dare you"]
-        ),
+        Args::parse_from([
+            "musicfetch",
+            "--rename",
+            "--no-rename",
+            "ytsearch:test me I dare you"
+        ]),
         Args {
             url: Some("ytsearch:test me I dare you".to_owned()),
             output_dir: "./".to_owned(),
@@ -248,9 +249,15 @@ fn test_arg_matching() {
     );
 
     assert_eq!(
-        Args::parse_from(
-            ["musicfetch", "--no-rename", "--rename", "-j", "playlist_json", "-c", "cover_url"]
-        ),
+        Args::parse_from([
+            "musicfetch",
+            "--no-rename",
+            "--rename",
+            "-j",
+            "playlist_json",
+            "-c",
+            "cover_url"
+        ]),
         Args {
             output_dir: "./".to_owned(),
             rename: true,

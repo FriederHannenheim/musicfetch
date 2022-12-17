@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use id3::Tag;
 
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 #[derive(Debug)]
@@ -23,7 +23,7 @@ pub struct SongMetadata {
     pub album: Option<String>,
     #[serde(default)]
     pub artist: Option<String>,
-    #[serde(default, rename="release_year")]
+    #[serde(default, rename = "release_year")]
     pub year: Option<i32>,
     #[serde(skip)]
     pub genre: Option<String>,

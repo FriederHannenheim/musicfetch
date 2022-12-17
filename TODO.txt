@@ -1,3 +1,4 @@
 ncurses ui for tagging
 man page
 --yes -y don't ask for input accept all
+clean up a bit

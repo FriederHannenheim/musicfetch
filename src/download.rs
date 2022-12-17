@@ -1,16 +1,19 @@
-use std::str;
-use std::process::{Command,Stdio};
 use std::error::Error;
-use std::io::{Write, Read};
+use std::io::{Read, Write};
+use std::process::{Command, Stdio};
+use std::str;
 
 use spinners::{Spinner, Spinners};
 
-const YT_DLP_ARGS : [&str; 8] = [
+const YT_DLP_ARGS: [&str; 8] = [
     "-x",
-    "-f", "ba",
-    "--audio-format", "mp3",
+    "-f",
+    "ba",
+    "--audio-format",
+    "mp3",
     "--restrict-filenames",
-    "-o", "%(title)s.%(ext)s",
+    "-o",
+    "%(title)s.%(ext)s",
 ];
 
 pub fn fetch_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
@@ -22,10 +25,10 @@ pub fn fetch_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
         .output()?;
 
     sp.stop_with_newline();
-    
+
     // Check if command ran correctly
     json_output.status.exit_ok()?;
-    
+
     Ok(String::from_utf8(json_output.stdout)?)
 }
 
@@ -35,10 +38,14 @@ pub fn download_song(yt_dlp_json: &str, dir: &str) -> Result<String, Box<dyn Err
         .args(&YT_DLP_ARGS)
         .arg("--load-info-json")
         .arg("-")
-        .arg("-P").arg(dir)
+        .arg("-P")
+        .arg(dir)
         .stdin(Stdio::piped())
         .spawn()?;
-    let stdin = download_process.stdin.as_mut().expect("Failed to write to yt-dlp stdin");
+    let stdin = download_process
+        .stdin
+        .as_mut()
+        .expect("Failed to write to yt-dlp stdin");
     stdin.write(&yt_dlp_json.as_bytes())?;
     download_process.wait()?.exit_ok().expect("Download failed");
 
@@ -46,24 +53,30 @@ pub fn download_song(yt_dlp_json: &str, dir: &str) -> Result<String, Box<dyn Err
     Ok(get_downloaded_filename(&yt_dlp_json)?)
 }
 
-fn get_downloaded_filename(yt_dlp_json: &str) -> Result<String,Box<dyn Error>> {
+fn get_downloaded_filename(yt_dlp_json: &str) -> Result<String, Box<dyn Error>> {
     let mut filename = String::new();
-    
+
     let mut filename_process = Command::new("yt-dlp")
         .args(&YT_DLP_ARGS)
-        .args([
-              "--load-info-json", "-",
-              "-O", "after_move:filepath",
-        ])
+        .args(["--load-info-json", "-", "-O", "after_move:filepath"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;
 
-    let stdin = filename_process.stdin.as_mut().expect("Failed to write to yt-dlp stdin");
+    let stdin = filename_process
+        .stdin
+        .as_mut()
+        .expect("Failed to write to yt-dlp stdin");
     stdin.write(&yt_dlp_json.as_bytes())?;
 
-    let mut stdout = filename_process.stdout.take().expect("Failed to capture yt-dlp stdout");
-    filename_process.wait()?.exit_ok().expect("Failed to get filename of downloaded file");
+    let mut stdout = filename_process
+        .stdout
+        .take()
+        .expect("Failed to capture yt-dlp stdout");
+    filename_process
+        .wait()?
+        .exit_ok()
+        .expect("Failed to get filename of downloaded file");
     stdout.read_to_string(&mut filename)?;
 
     return Ok(filename.trim().to_owned());
