@@ -7,7 +7,7 @@ use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{builder::ArgPredicate, ArgAction, ArgGroup, Parser};
 
@@ -21,6 +21,8 @@ use id3::{Tag, TagLike};
 use regex::Regex;
 
 use dialoguer::{Confirm, Input};
+
+use sanitize_filename::sanitize;
 
 mod download;
 mod structs;
@@ -138,17 +140,37 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if args.rename {
             // TODO: Currently all files are mp3 but in future this should not be hardcoded
-            let out_path = format!(
+            let mut out_path = format!(
                 "{}{}.mp3",
                 &args.output_dir,
-                song.tag.unwrap().title().unwrap()
+                &sanitize_and_remove_leading_dots(song.tag.as_ref().unwrap().title().unwrap())
             );
+
+            let mut i = 1;
+            while Path::new(&out_path).exists() {
+                print!("{}", i);
+                out_path = format!(
+                    "{}{} ({}).mp3",
+                    &args.output_dir,
+                    &sanitize_and_remove_leading_dots(song.tag.as_ref().unwrap().title().unwrap()),
+                    i
+                );
+                i += 1;
+            }
+
             fs::copy(&song.path, &out_path)?;
             fs::remove_file(&song.path)?;
         }
     }
 
     Ok(())
+}
+
+// Remove leading dots from a filename so the file isn't hidden in Unix systems
+fn sanitize_and_remove_leading_dots(filename: &str) -> String {
+    let filename = sanitize(filename);
+    let re = Regex::new(r"^\.*").unwrap();
+    re.replace(&filename, "").into_owned()
 }
 
 fn get_yt_dlp_json(args: &Args) -> Result<String, Box<dyn Error>> {

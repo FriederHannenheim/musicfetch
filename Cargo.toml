@@ -14,3 +14,4 @@ regex = "1.7"
 minreq = { version = "2.6.0", features = ["https", "punycode"] } 
 dialoguer = "*"
 spinners = "4.1.0"
+sanitize-filename = "0.4.0"

@@ -1,5 +1,5 @@
 # Musicfetch
-Musicfetch is a YouTube music downloader which allows you to interactively tag your music. This project is engineered to fit my needs but it might just fit yours too. This tool probably isn't for you if you are an Audiophile. Songs are downloaded from Youtube as a 133 kb/s opus and then recoded to mp3. Most people (including me) won't notice but if you will don't bother with this tool (or open a PR/Suggest another way to get songs with better quality).
+Musicfetch is a YouTube music downloader which allows you to interactively tag your music. This project is engineered to fit my needs but it might just fit yours too. This tool probably isn't for you if you are an Audiophile. Songs are downloaded from Youtube as a 133 kb/s opus and then recoded to mp3. Most people (including me) won't notice but if you will don't bother with this tool (or open a PR/Suggest another way to get songs with better quality). You can also download from Bandcamp, then the songs will be 128 kb/s mp3's and won't need to be reencoded. 
 ### Description
 - Uses Id3v2.3 tags because 2.4 isn't supported anywhere
     - Because of this multiple artists/genres aren't supported
