@@ -123,17 +123,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let cover_image = args.cover_url.as_ref().map(|url| fetch_cover_image(&url));
 
-    loop {
-        println!("\nInput album metadata:");
-        complete_song_metadata(&mut songs, &args)?;
-        if Confirm::new()
-            .with_prompt("Metadata correct?")
-            .default(true)
-            .interact()?
-        {
-            break;
-        }
-    }
+    complete_song_metadata(&mut songs, &args)?;
 
     for mut song in songs {
         song = tag_song(song, cover_image.clone())?;
@@ -147,8 +137,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
 
             let mut i = 1;
-            while Path::new(&out_path).exists() {
-                print!("{}", i);
+            while Path::new(&out_path).exists() && Path::new(&song.path) != Path::new(&out_path) {
                 out_path = format!(
                     "{}{} ({}).mp3",
                     &args.output_dir,
@@ -158,8 +147,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 i += 1;
             }
 
-            fs::copy(&song.path, &out_path)?;
-            fs::remove_file(&song.path)?;
+            if Path::new(&song.path) != Path::new(&out_path) {
+                fs::rename(&song.path, &out_path)?;
+            }
         }
     }
 
@@ -186,29 +176,44 @@ fn get_yt_dlp_json(args: &Args) -> Result<String, Box<dyn Error>> {
 
 fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<dyn Error>> {
     if args.album {
-        let album_title: String = Input::new().with_prompt("Album Title").interact_text()?;
-        let artist: String = Input::new().with_prompt("Artist").interact_text()?;
-        let year: i32 = Input::new().with_prompt("Year").interact_text()?;
-        let genre: String = Input::new()
-            .with_prompt("Genre")
-            .allow_empty(true)
-            .interact_text()?;
-
-        let album_metadata = AlbumMetadata {
-            album_title: album_title,
-            artist: artist,
-            year: year,
-            genre: if genre.len() > 0 { Some(genre) } else { None },
-        };
-
-        let song_count = songs.len();
-        for (i, song) in songs.iter_mut().enumerate() {
-            let mut metadata = &mut song.song_metadata;
-
-            metadata.apply(album_metadata.clone());
-            metadata.track_no = Some(i as u32 + 1);
-            metadata.total_tracks = Some(song_count as u32);
+        loop {
+            println!("\nInput album metadata:");
+            input_album_metadata(songs)?;
+            if Confirm::new()
+                .with_prompt("Metadata correct?")
+                .default(true)
+                .interact()?
+            {
+                break;
+            }
         }
+    }
+    Ok(())
+}
+
+fn input_album_metadata(songs: &mut Vec<Song>) -> Result<(), Box<dyn Error>> {
+    let album_title: String = Input::new().with_prompt("Album Title").interact_text()?;
+    let artist: String = Input::new().with_prompt("Artist").interact_text()?;
+    let year: i32 = Input::new().with_prompt("Year").interact_text()?;
+    let genre: String = Input::new()
+        .with_prompt("Genre")
+        .allow_empty(true)
+        .interact_text()?;
+
+    let album_metadata = AlbumMetadata {
+        album_title: album_title,
+        artist: artist,
+        year: year,
+        genre: if genre.len() > 0 { Some(genre) } else { None },
+    };
+
+    let song_count = songs.len();
+    for (i, song) in songs.iter_mut().enumerate() {
+        let mut metadata = &mut song.song_metadata;
+
+        metadata.apply(album_metadata.clone());
+        metadata.track_no = Some(i as u32 + 1);
+        metadata.total_tracks = Some(song_count as u32);
     }
     Ok(())
 }
