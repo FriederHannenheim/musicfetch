@@ -15,7 +15,22 @@ Musicfetch is a YouTube music downloader which allows you to interactively tag y
 This crate uses many experimental features because I like living on the edge and thus can only compiled with the nightly toolchain.
 
 ## Usage
-    musicfetch VIDEO_URL [COVER_URL]
+    Usage: musicfetch [OPTIONS] <URL|--files <FILES>...|--yt-dlp-json <FILE>>
+    
+    Arguments:
+      [URL]  url of a song or a album playlist
+    
+    Options:
+      -f, --files <FILES>...         Instead of downloading, tag these local files
+      -j, --yt-dlp-json <FILE>       Path to read yt-dlp json from or "-" for stdin
+      -c, --cover-url <COVER_URL>    url for the cover image
+      -a, --album                    Enable album mode. Artist, Album, Year, Genre will be queried at the start and set for all tracks. Track Number and Total Tracks will be set automatically
+      -o, --output-dir <OUTPUT_DIR>  [default: ./]
+          --no-rename                Don't rename songs
+          --rename                   Rename songs to their titles [default]
+      -h, --help                     Print help information
+      -V, --version                  Print version information
+
 ## Dependencies
 - yt-dlp
 ## Common Errors:

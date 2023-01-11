@@ -29,42 +29,43 @@ mod download;
 mod structs;
 mod tagging;
 
+/// musicfetch is a program for downloading and/or tagging music. It uses yt-dlp as a downloader so all sites supported by yt-dlp are also supported by musicfetch
 #[derive(Parser, Debug, Default, Eq, PartialEq)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about)]
 #[command(group(
     ArgGroup::new("song")
         .required(true)
         .args(["url", "files", "yt_dlp_json"])
     ))]
 struct Args {
-    // url of a song or a album playlist
+    /// url of a song or a album playlist
     url: Option<String>,
 
-    // Instead of downloading, tag these local files. Implies --no-rename
+    /// Instead of downloading, tag these local files
     #[arg(short, long, num_args = 1..)]
     files: Vec<PathBuf>,
 
-    // Path to read yt-dlp json from or "-" for stdin
+    /// Path to read yt-dlp json from or "-" for stdin
     #[arg(short = 'j', long, value_name = "FILE")]
     yt_dlp_json: Option<PathBuf>,
 
-    // url for the cover image
+    /// url for the cover image
     #[arg(short, long)]
     cover_url: Option<String>,
 
-    // Enable album mode. Artist, Album, Year, Genre will be queried at the start and set for all tracks.
-    // Track Number and Total Tracks will be set automatically.
+    /// Enable album mode. Artist, Album, Year, Genre will be queried at the start and set for all tracks.
+    /// Track Number and Total Tracks will be set automatically.
     #[arg(short, long)]
     album: bool,
 
     #[arg(short, long, default_value = "./")]
     output_dir: String,
 
-    // Don't rename songs
-    #[clap(long = "no-rename", action = ArgAction::SetFalse, default_value_if("files", ArgPredicate::IsPresent, Some("false")))]
+    /// Don't rename songs
+    #[clap(long = "no-rename", action = ArgAction::SetFalse)]
     rename: bool,
 
-    // Rename songs to their titles [default]
+    /// Rename songs to their titles [default]
     #[arg(long = "rename", overrides_with = "rename")]
     _no_rename: bool,
 }
