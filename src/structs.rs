@@ -36,16 +36,16 @@ impl SongMetadata {
         self.album = Some(album_metadata.album_title);
         self.artist = Some(album_metadata.artist);
         self.year = Some(album_metadata.year);
-        self.genre = album_metadata.genre;
+        self.genre = Some(album_metadata.genre);
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AlbumMetadata {
     pub album_title: String,
     pub artist: String,
     pub year: i32,
-    pub genre: Option<String>,
+    pub genre: String,
 }
 
 #[derive(Debug, Deserialize)]

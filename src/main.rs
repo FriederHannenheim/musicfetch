@@ -4,6 +4,7 @@
 
 use std::default::default;
 use std::error::Error;
+use std::fmt::Debug;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
@@ -106,8 +107,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             songs.push(Song {
                 path: path.into(),
-                tag: tag,
-                song_metadata: song_metadata,
+                tag,
+                song_metadata,
             });
         }
     }
@@ -116,7 +117,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         songs.push(Song {
             path: path.clone(),
-            tag: tag,
+            tag,
             song_metadata: default(),
         });
     }
@@ -176,9 +177,10 @@ fn get_yt_dlp_json(args: &Args) -> Result<String, Box<dyn Error>> {
 
 fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<dyn Error>> {
     if args.album {
+        let mut album_metadata = AlbumMetadata::default();
         loop {
             println!("\nInput album metadata:");
-            input_album_metadata(songs)?;
+            album_metadata = input_album_metadata(album_metadata)?;
             if Confirm::new()
                 .with_prompt("Metadata correct?")
                 .default(true)
@@ -187,35 +189,32 @@ fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<
                 break;
             }
         }
+        let song_count = songs.len();
+        for (i, song) in songs.iter_mut().enumerate() {
+            let mut metadata = &mut song.song_metadata;
+
+            metadata.apply(album_metadata.clone());
+            metadata.track_no = Some(i as u32 + 1);
+            metadata.total_tracks = Some(song_count as u32);
+        }
     }
     Ok(())
 }
 
-fn input_album_metadata(songs: &mut Vec<Song>) -> Result<(), Box<dyn Error>> {
-    let album_title: String = Input::new().with_prompt("Album Title").interact_text()?;
-    let artist: String = Input::new().with_prompt("Artist").interact_text()?;
-    let year: i32 = Input::new().with_prompt("Year").interact_text()?;
-    let genre: String = Input::new()
-        .with_prompt("Genre")
-        .allow_empty(true)
-        .interact_text()?;
+fn input_album_metadata(album_metadata: AlbumMetadata) -> Result<AlbumMetadata, Box<dyn Error>> {
+    let album_title: String = prompt("Album Title", false, album_metadata.album_title)?;
+    let artist: String = prompt("Artist", false, album_metadata.artist)?;
+    let year: i32 = prompt("Year", false, album_metadata.year.to_string())?;
+    let genre: String = prompt("Genre", true, album_metadata.genre)?;
 
     let album_metadata = AlbumMetadata {
-        album_title: album_title,
-        artist: artist,
-        year: year,
-        genre: if genre.len() > 0 { Some(genre) } else { None },
+        album_title,
+        artist,
+        year,
+        genre,
     };
 
-    let song_count = songs.len();
-    for (i, song) in songs.iter_mut().enumerate() {
-        let mut metadata = &mut song.song_metadata;
-
-        metadata.apply(album_metadata.clone());
-        metadata.track_no = Some(i as u32 + 1);
-        metadata.total_tracks = Some(song_count as u32);
-    }
-    Ok(())
+    Ok(album_metadata)
 }
 
 pub fn fetch_cover_image(url: &str) -> Picture {
@@ -228,7 +227,7 @@ pub fn fetch_cover_image(url: &str) -> Picture {
         .expect("Failed to find file extension in cover url. Make sure it is a valid image url");
 
     Picture {
-        mime_type: mime_type,
+        mime_type,
         picture_type: PictureType::CoverFront,
         description: "Cover".to_owned(),
         data: resp.as_bytes().into(),
@@ -293,4 +292,21 @@ fn test_arg_matching() {
             ..default()
         }
     );
+}
+
+fn prompt<T: std::fmt::Display + Clone + std::str::FromStr>(
+    prompt: &str,
+    allow_empty: bool,
+    initial_text: String,
+) -> Result<T, std::io::Error>
+where
+    <T as std::str::FromStr>::Err: std::fmt::Display,
+    <T as std::str::FromStr>::Err: Debug,
+{
+    let mut input = Input::new();
+    input
+        .with_prompt(prompt)
+        .allow_empty(allow_empty)
+        .with_initial_text(initial_text);
+    input.interact_text()
 }
