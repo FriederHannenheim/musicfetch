@@ -31,6 +31,7 @@ use cursive::{Cursive, CursiveExt};
 mod download;
 mod structs;
 mod tagging;
+mod tui;
 
 /// musicfetch is a program for downloading and/or tagging music. It uses yt-dlp as a downloader so all sites supported by yt-dlp are also supported by musicfetch
 #[derive(Parser, Debug, Default, Eq, PartialEq)]
@@ -205,28 +206,8 @@ fn input_album_metadata() -> Result<AlbumMetadata, Box<dyn Error>> {
 
     siv.set_theme(Theme::terminal_default());
 
-    let inputs = LinearLayout::vertical()
-        .child(TextView::new("Album Title"))
-        .child(EditView::new().with_name("album"))
-        .child(TextView::new("Artist"))
-        .child(EditView::new().with_name("artist"))
-        .child(TextView::new("Year"))
-        .child(
-            EditView::new()
-                .on_edit(|s, t, _| {
-                    s.call_on_name("year", |view: &mut EditView| {
-                        view.set_content(
-                            t.chars()
-                                .filter(|c| c.is_ascii_digit())
-                                .take(4)
-                                .fold(String::new(), |x, y| x + &y.to_string()),
-                        );
-                    });
-                })
-                .with_name("year"),
-        )
-        .child(TextView::new("Genre"))
-        .child(EditView::new().with_name("genre"));
+    let inputs = tui::get_album_metadata_layout();
+
     let dialog = Dialog::around(inputs)
         .button("Ok", |s| {
             let album_title = s
