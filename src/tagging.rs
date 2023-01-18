@@ -6,26 +6,23 @@ use id3::{Tag, TagLike, Version};
 use dialoguer::{Confirm, Input};
 
 use crate::structs::{Song, SongMetadata};
+use crate::Args;
 
-pub fn tag_song(mut song: Song, cover: Option<Picture>) -> Result<Song, Box<dyn Error>> {
+pub fn tag_song(
+    mut song: Song,
+    cover: Option<Picture>,
+    settings: &Args,
+) -> Result<Song, Box<dyn Error>> {
     let mut tag = song.tag.unwrap_or(Tag::new());
 
     add_metadata_to_tag(&song.song_metadata, &mut tag);
 
-    if let Some(picture) = cover {
-        tag.add_frame(picture);
+    if !settings.yes {
+        tag_with_input(&mut tag, &song.path.display().to_string())?;
     }
 
-    loop {
-        println!("\n{}", &song.path.display());
-        metadata_prompt(&mut tag)?;
-        if Confirm::new()
-            .with_prompt("Metadata correct?")
-            .default(true)
-            .interact()?
-        {
-            break;
-        }
+    if let Some(picture) = cover {
+        tag.add_frame(picture);
     }
 
     tag.write_to_path(&song.path, Version::Id3v23)
@@ -58,37 +55,33 @@ fn add_metadata_to_tag(metadata: &SongMetadata, tag: &mut Tag) {
     if let Some(total_tracks) = metadata.total_tracks && !tag.total_tracks().is_some() { tag.set_total_tracks(total_tracks); }
 }
 
+fn tag_with_input(tag: &mut Tag, path: &str) -> Result<(), Box<dyn Error>> {
+    loop {
+        println!("\n{}", path);
+        metadata_prompt(tag)?;
+        if Confirm::new()
+            .with_prompt("Metadata correct?")
+            .default(true)
+            .interact()?
+        {
+            break;
+        }
+    }
+    Ok(())
+}
+
 fn metadata_prompt(tag: &mut Tag) -> Result<(), Box<dyn Error>> {
-    let title: String = Input::new()
-        .with_prompt("Title")
-        .with_initial_text(tag.title().unwrap_or(""))
-        .interact_text()?;
-    let album: String = Input::new()
-        .with_prompt("Album")
-        .with_initial_text(tag.album().unwrap_or(""))
-        .allow_empty(true)
-        .interact_text()?;
-    let artist: String = Input::new()
-        .with_prompt("Artist")
-        .with_initial_text(tag.artist().unwrap_or(""))
-        .interact_text()?;
-    let year: i32 = Input::new()
-        .with_prompt("Year")
-        .with_initial_text(to_string_or_empty(tag.year()))
-        .interact_text()?;
-    let genre: String = Input::new()
-        .with_prompt("Genre")
-        .with_initial_text(tag.genre().unwrap_or(""))
-        .allow_empty(true)
-        .interact_text()?;
-    let track: u32 = Input::new()
-        .with_prompt("Track No.")
-        .with_initial_text(to_string_or_empty(tag.track()))
-        .interact_text()?;
-    let total_tracks: u32 = Input::new()
-        .with_prompt("Total Tracks")
-        .with_initial_text(to_string_or_empty(tag.total_tracks()))
-        .interact_text()?;
+    let title: String = prompt("Title", false, tag.title().unwrap_or_default().to_owned())?;
+    let album: String = prompt("Album", false, tag.album().unwrap_or_default().to_owned())?;
+    let artist: String = prompt("Artist", false, tag.artist().unwrap_or_default().to_owned())?;
+    let year: i32 = prompt("Year", false, to_string_or_empty(tag.year()))?;
+    let genre: String = prompt("Genre", true, tag.genre().unwrap_or_default().to_owned())?;
+    let track: u32 = prompt("Track No.", false, to_string_or_empty(tag.track()))?;
+    let total_tracks: u32 = prompt(
+        "Total Tracks",
+        false,
+        to_string_or_empty(tag.total_tracks()),
+    )?;
     tag.set_title(title);
     tag.set_album(album);
     tag.set_artist(artist);
@@ -106,4 +99,21 @@ fn to_string_or_empty<T: ToString>(option: Option<T>) -> String {
     } else {
         String::new()
     }
+}
+
+pub fn prompt<T: std::fmt::Display + Clone + std::str::FromStr>(
+    prompt: &str,
+    allow_empty: bool,
+    initial_text: String,
+) -> Result<T, std::io::Error>
+where
+    <T as std::str::FromStr>::Err: std::fmt::Display,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    let mut input = Input::new();
+    input
+        .with_prompt(prompt)
+        .allow_empty(allow_empty)
+        .with_initial_text(initial_text);
+    input.interact_text()
 }

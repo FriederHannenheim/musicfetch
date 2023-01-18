@@ -10,18 +10,18 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use clap::{builder::ArgPredicate, ArgAction, ArgGroup, Parser};
+use clap::{ArgAction, ArgGroup, Parser};
 
 use crate::download::{download_song, fetch_yt_dlp_json};
 use crate::structs::{AlbumMetadata, Playlist, Song, SongMetadata};
-use crate::tagging::tag_song;
+use crate::tagging::{prompt, tag_song};
 
 use id3::frame::{Picture, PictureType};
 use id3::{Tag, TagLike};
 
 use regex::Regex;
 
-use dialoguer::{Confirm, Input};
+use dialoguer::Confirm;
 
 use sanitize_filename::sanitize;
 
@@ -37,7 +37,7 @@ mod tagging;
         .required(true)
         .args(["url", "files", "yt_dlp_json"])
     ))]
-struct Args {
+pub struct Args {
     /// url of a song or a album playlist
     url: Option<String>,
 
@@ -68,6 +68,9 @@ struct Args {
     /// Rename songs to their titles [default]
     #[arg(long = "rename", overrides_with = "rename")]
     _no_rename: bool,
+
+    #[arg(short, long)]
+    yes: bool,
 }
 
 impl Args {
@@ -97,7 +100,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 songs.push(Song {
                     path: path.into(),
-                    tag: tag,
+                    tag,
                     song_metadata: metadata,
                 });
             }
@@ -128,7 +131,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     complete_song_metadata(&mut songs, &args)?;
 
     for mut song in songs {
-        song = tag_song(song, cover_image.clone())?;
+        song = tag_song(song, cover_image.clone(), &args)?;
 
         if args.rename {
             // TODO: Currently all files are mp3 but in future this should not be hardcoded
@@ -177,7 +180,7 @@ fn get_yt_dlp_json(args: &Args) -> Result<String, Box<dyn Error>> {
 }
 
 fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<dyn Error>> {
-    if args.album {
+    if args.album && !args.yes {
         let mut album_metadata = AlbumMetadata::default();
         loop {
             println!("\nInput album metadata:");
@@ -293,21 +296,4 @@ fn test_arg_matching() {
             ..default()
         }
     );
-}
-
-fn prompt<T: std::fmt::Display + Clone + std::str::FromStr>(
-    prompt: &str,
-    allow_empty: bool,
-    initial_text: String,
-) -> Result<T, std::io::Error>
-where
-    <T as std::str::FromStr>::Err: std::fmt::Display,
-    <T as std::str::FromStr>::Err: Debug,
-{
-    let mut input = Input::new();
-    input
-        .with_prompt(prompt)
-        .allow_empty(allow_empty)
-        .with_initial_text(initial_text);
-    input.interact_text()
 }
