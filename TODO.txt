@@ -1,4 +1,3 @@
 ncurses ui for tagging
 man page
---yes -y don't ask for input accept all
 Allow splitting album videos

@@ -11,19 +11,22 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use clap::{ArgAction, ArgGroup, Parser};
+use cursive::theme::Theme;
+use cursive::view::{Nameable, Resizable};
+use cursive::views::{Dialog, EditView, LinearLayout, TextView};
 
 use crate::download::{download_song, fetch_yt_dlp_json};
 use crate::structs::{AlbumMetadata, Playlist, Song, SongMetadata};
-use crate::tagging::{prompt, tag_song};
+use crate::tagging::tag_song;
 
 use id3::frame::{Picture, PictureType};
 use id3::{Tag, TagLike};
 
 use regex::Regex;
 
-use dialoguer::Confirm;
-
 use sanitize_filename::sanitize;
+
+use cursive::{Cursive, CursiveExt};
 
 mod download;
 mod structs;
@@ -181,18 +184,10 @@ fn get_yt_dlp_json(args: &Args) -> Result<String, Box<dyn Error>> {
 
 fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<dyn Error>> {
     if args.album && !args.yes {
-        let mut album_metadata = AlbumMetadata::default();
-        loop {
-            println!("\nInput album metadata:");
-            album_metadata = input_album_metadata(album_metadata)?;
-            if Confirm::new()
-                .with_prompt("Metadata correct?")
-                .default(true)
-                .interact()?
-            {
-                break;
-            }
-        }
+        let album_metadata = input_album_metadata()?;
+
+        println!("{:?}", album_metadata);
+
         let song_count = songs.len();
         for (i, song) in songs.iter_mut().enumerate() {
             let mut metadata = &mut song.song_metadata;
@@ -205,18 +200,64 @@ fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<
     Ok(())
 }
 
-fn input_album_metadata(album_metadata: AlbumMetadata) -> Result<AlbumMetadata, Box<dyn Error>> {
-    let album_title: String = prompt("Album Title", false, album_metadata.album_title)?;
-    let artist: String = prompt("Artist", false, album_metadata.artist)?;
-    let year: i32 = prompt("Year", false, album_metadata.year.to_string())?;
-    let genre: String = prompt("Genre", true, album_metadata.genre)?;
+fn input_album_metadata() -> Result<AlbumMetadata, Box<dyn Error>> {
+    let mut siv = Cursive::default();
 
-    let album_metadata = AlbumMetadata {
-        album_title,
-        artist,
-        year,
-        genre,
-    };
+    siv.set_theme(Theme::terminal_default());
+
+    let inputs = LinearLayout::vertical()
+        .child(TextView::new("Album Title"))
+        .child(EditView::new().with_name("album"))
+        .child(TextView::new("Artist"))
+        .child(EditView::new().with_name("artist"))
+        .child(TextView::new("Year"))
+        .child(
+            EditView::new()
+                .on_edit(|s, t, _| {
+                    s.call_on_name("year", |view: &mut EditView| {
+                        view.set_content(
+                            t.chars()
+                                .filter(|c| c.is_ascii_digit())
+                                .take(4)
+                                .fold(String::new(), |x, y| x + &y.to_string()),
+                        );
+                    });
+                })
+                .with_name("year"),
+        )
+        .child(TextView::new("Genre"))
+        .child(EditView::new().with_name("genre"));
+    let dialog = Dialog::around(inputs)
+        .button("Ok", |s| {
+            let album_title = s
+                .call_on_name("album", |v: &mut EditView| v.get_content().to_string())
+                .unwrap();
+            let artist = s
+                .call_on_name("artist", |v: &mut EditView| v.get_content().to_string())
+                .unwrap();
+            let year = s
+                .call_on_name("year", |v: &mut EditView| {
+                    v.get_content().parse::<i32>().unwrap()
+                })
+                .unwrap();
+            let genre = s
+                .call_on_name("genre", |v: &mut EditView| v.get_content().to_string())
+                .unwrap();
+            s.set_user_data(AlbumMetadata {
+                album_title,
+                artist,
+                year,
+                genre,
+            });
+            s.quit();
+        })
+        .min_width(40);
+
+    siv.add_layer(dialog);
+
+    siv.run();
+
+    let album_metadata = siv.take_user_data().unwrap();
 
     Ok(album_metadata)
 }

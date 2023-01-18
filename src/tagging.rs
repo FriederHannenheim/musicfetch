@@ -101,7 +101,7 @@ fn to_string_or_empty<T: ToString>(option: Option<T>) -> String {
     }
 }
 
-pub fn prompt<T: std::fmt::Display + Clone + std::str::FromStr>(
+fn prompt<T: std::fmt::Display + Clone + std::str::FromStr>(
     prompt: &str,
     allow_empty: bool,
     initial_text: String,
