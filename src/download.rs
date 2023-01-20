@@ -22,7 +22,8 @@ pub fn fetch_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
         .arg("-J")
         .arg(&url)
         .stderr(Stdio::inherit())
-        .output()?;
+        .output()
+        .expect("Running yt-dlp command failed. Check if it is installed");
 
     sp.stop_with_newline();
 
