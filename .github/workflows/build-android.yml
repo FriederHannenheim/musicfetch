@@ -22,4 +22,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: android-bin
-          path: target/release/musicfetch
+          path: target/arm-linux-androideabi/release/musicfetch
