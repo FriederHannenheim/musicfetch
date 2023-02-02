@@ -17,4 +17,8 @@ jobs:
         with:
           use-cross: true
           command: build
-          args: --target rm-linux-androideabi
+          args: --target arm-linux-androideabi --release
+      - uses: actions/upload-artifact@v3
+        with:
+          name: android-bin
+          path: target/release/musicfetch
