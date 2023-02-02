@@ -18,7 +18,6 @@ jobs:
           use-cross: true
           command: build
           args: --target arm-linux-androideabi --release
-      - run: tree .
       - uses: actions/upload-artifact@v3
         with:
           name: android-bin
