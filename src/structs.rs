@@ -1,14 +1,13 @@
 use std::path::PathBuf;
 
-use id3::Tag;
+use lofty::Tag;
 
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug)]
 pub struct Song {
     pub path: PathBuf,
-    pub tag: Option<Tag>,
+    pub tag: Tag,
     pub song_metadata: SongMetadata,
 }
 
@@ -20,7 +19,7 @@ pub struct SongMetadata {
     pub album: Option<String>,
     pub artist: Option<String>,
     #[serde(default, rename = "release_year")]
-    pub year: Option<i32>,
+    pub year: Option<u32>,
     #[serde(skip)]
     pub genre: Option<String>,
     #[serde(skip)]
@@ -44,7 +43,7 @@ impl SongMetadata {
 pub struct AlbumMetadata {
     pub album_title: String,
     pub artist: String,
-    pub year: i32,
+    pub year: u32,
     pub genre: String,
 }
 

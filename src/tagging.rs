@@ -1,7 +1,6 @@
 use std::error::Error;
 
-use id3::frame::Picture;
-use id3::{Tag, TagLike, Version};
+use lofty::{Accessor, Picture, Tag, TagExt};
 
 use dialoguer::{Confirm, Input};
 
@@ -13,7 +12,7 @@ pub fn tag_song(
     cover: Option<Picture>,
     settings: &Args,
 ) -> Result<Song, Box<dyn Error>> {
-    let mut tag = song.tag.unwrap_or(Tag::new());
+    let mut tag = song.tag;
 
     add_metadata_to_tag(&song.song_metadata, &mut tag);
 
@@ -21,38 +20,38 @@ pub fn tag_song(
         tag_with_input(&mut tag, &song.path.display().to_string())?;
     }
 
-    if let Some(picture) = cover {
-        tag.add_frame(picture);
-    }
+    if let Some(cover) = cover {
+        tag.push_picture(cover);
+    };
 
-    tag.write_to_path(&song.path, Version::Id3v23)
+    tag.save_to_path(&song.path)
         .expect("Writing Id3 tag failed");
 
-    song.tag = Some(tag);
+    song.tag = tag;
 
     Ok(song)
 }
 
 fn add_metadata_to_tag(metadata: &SongMetadata, tag: &mut Tag) {
     if let Some(title) = &metadata.title {
-        tag.set_title(title);
+        tag.set_title(title.clone());
     }
     if let Some(album) = &metadata.album {
-        tag.set_album(album);
+        tag.set_album(album.clone());
     }
     if let Some(artist) = &metadata.artist {
-        tag.set_artist(artist);
+        tag.set_artist(artist.clone());
     }
     if let Some(year) = metadata.year {
         tag.set_year(year);
     }
     if let Some(genre) = &metadata.genre {
-        tag.set_genre(genre);
+        tag.set_genre(genre.clone());
     }
 
     // If the tag already has track_no/total_tracks ignore the generated one
     if let Some(track_no) = metadata.track_no && !tag.track().is_some() { tag.set_track(track_no); }
-    if let Some(total_tracks) = metadata.total_tracks && !tag.total_tracks().is_some() { tag.set_total_tracks(total_tracks); }
+    if let Some(total_tracks) = metadata.total_tracks && !tag.track_total().is_some() { tag.set_track_total(total_tracks); }
 }
 
 fn tag_with_input(tag: &mut Tag, path: &str) -> Result<(), Box<dyn Error>> {
@@ -71,24 +70,24 @@ fn tag_with_input(tag: &mut Tag, path: &str) -> Result<(), Box<dyn Error>> {
 }
 
 fn metadata_prompt(tag: &mut Tag) -> Result<(), Box<dyn Error>> {
-    let title: String = prompt("Title", false, tag.title().unwrap_or_default().to_owned())?;
-    let album: String = prompt("Album", false, tag.album().unwrap_or_default().to_owned())?;
-    let artist: String = prompt("Artist", false, tag.artist().unwrap_or_default().to_owned())?;
-    let year: i32 = prompt("Year", false, to_string_or_empty(tag.year()))?;
-    let genre: String = prompt("Genre", true, tag.genre().unwrap_or_default().to_owned())?;
-    let track: u32 = prompt("Track No.", false, to_string_or_empty(tag.track()))?;
-    let total_tracks: u32 = prompt(
-        "Total Tracks",
+    let title: String = prompt("Title", false, tag.title().unwrap_or_default().to_string())?;
+    let album: String = prompt("Album", false, tag.album().unwrap_or_default().to_string())?;
+    let artist: String = prompt(
+        "Artist",
         false,
-        to_string_or_empty(tag.total_tracks()),
+        tag.artist().unwrap_or_default().to_string(),
     )?;
+    let year: u32 = prompt("Year", false, to_string_or_empty(tag.year()))?;
+    let genre: String = prompt("Genre", true, tag.genre().unwrap_or_default().to_string())?;
+    let track: u32 = prompt("Track No.", false, to_string_or_empty(tag.track()))?;
+    let total_tracks: u32 = prompt("Total Tracks", false, to_string_or_empty(tag.track_total()))?;
     tag.set_title(title);
     tag.set_album(album);
     tag.set_artist(artist);
     tag.set_year(year);
     tag.set_genre(genre);
     tag.set_track(track);
-    tag.set_total_tracks(total_tracks);
+    tag.set_track_total(total_tracks);
 
     Ok(())
 }
