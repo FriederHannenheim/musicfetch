@@ -12,15 +12,14 @@ use std::path::{Path, PathBuf};
 
 use clap::{ArgAction, ArgGroup, Parser};
 use cursive::theme::Theme;
-use cursive::view::{Nameable, Resizable};
-use cursive::views::{Dialog, EditView, LinearLayout, TextView};
-use serde::de::IntoDeserializer;
+use cursive::view::Resizable;
+use cursive::views::{Dialog, EditView};
 
 use crate::download::{download_song, fetch_yt_dlp_json};
 use crate::structs::{AlbumMetadata, Playlist, Song, SongMetadata};
 use crate::tagging::tag_song;
 
-use lofty::{Accessor, MimeType, Picture, PictureType, Probe, Tag, TaggedFileExt};
+use lofty::{Accessor, MimeType, Picture, PictureType, Probe, Tag, TagExt, TagType, TaggedFileExt};
 
 use regex::Regex;
 
@@ -100,7 +99,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let metadata: SongMetadata = serde_json::from_value(song_entry.clone())?;
                 let json = serde_json::to_string(&song_entry)?;
                 let path = download_song(&json, &args.output_dir)?;
-                let tag = get_tag_for_file(&path.clone().into());
+                let tag = tag_for_file(&path.clone().into());
 
                 songs.push(Song {
                     path: path.into(),
@@ -111,7 +110,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         if let Ok(song_metadata) = serde_json::from_str::<SongMetadata>(&yt_dlp_json) {
             let path = download_song(&yt_dlp_json, &args.output_dir)?;
-            let tag = get_tag_for_file(&path.clone().into());
+            let tag = tag_for_file(&path.clone().into());
 
             songs.push(Song {
                 path: path.into(),
@@ -121,7 +120,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     for path in &args.files {
-        let tag = get_tag_for_file(path);
+        let tag = tag_for_file(path);
 
         songs.push(Song {
             path: path.clone(),
@@ -264,14 +263,14 @@ fn get_mime_type(url: &str) -> Option<MimeType> {
     let mime_text = format!("image/{}", file_extension);
     Some(MimeType::from_str(&mime_text))
 }
-
-fn get_tag_for_file(path: &PathBuf) -> Tag {
+/// Get or create tag for the file in `path`. Will strip all other tags
+fn tag_for_file(path: &PathBuf) -> Tag {
     let mut tagged_file = Probe::open(path)
         .expect("File not found")
         .read()
         .expect("Failed to read file");
 
-    match tagged_file.primary_tag() {
+    let mut tag = match tagged_file.primary_tag() {
         Some(primary_tag) => primary_tag,
         None => {
             if let Some(first_tag) = tagged_file.first_tag() {
@@ -284,7 +283,25 @@ fn get_tag_for_file(path: &PathBuf) -> Tag {
             }
         }
     }
-    .clone()
+    .clone();
+
+    // TODO: This should be moved to when the tag is written
+    for old_tag in tagged_file.tags() {
+        if old_tag.remove_from_path(path).is_err() {
+            println!(
+                "Unable to remove {:?} tag from {}",
+                old_tag.tag_type(),
+                path.display()
+            );
+        }
+    }
+
+    // Upgrade ID3v1 to ID3v2
+    if tag.tag_type() == TagType::ID3v1 {
+        tag.re_map(TagType::ID3v2);
+    }
+
+    tag
 }
 
 #[test]

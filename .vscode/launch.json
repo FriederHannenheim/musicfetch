@@ -1,0 +1,48 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'musicfetch'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=musicfetch",
+                    "--package=musicfetch",
+                ],
+                "filter": {
+                    "name": "musicfetch",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "-f",
+                "/home/fried/Music/Death Grips/Exmilitary/5D.mp3"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'musicfetch'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=musicfetch",
+                    "--package=musicfetch"
+                ],
+                "filter": {
+                    "name": "musicfetch",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

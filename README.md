@@ -14,6 +14,9 @@ Musicfetch is a YouTube music downloader which allows you to interactively tag y
 
 This crate uses many experimental features because I like living on the edge and thus can only compiled with the nightly toolchain.
 
+## Notes
+- ID3v1 tags will be automatically upgraded to ID3v2
+
 ## Usage
     Usage: musicfetch [OPTIONS] <URL|--files <FILES>...|--yt-dlp-json <FILE>>
     
