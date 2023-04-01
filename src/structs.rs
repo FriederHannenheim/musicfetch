@@ -5,13 +5,14 @@ use lofty::Tag;
 use serde::Deserialize;
 use serde_json::Value;
 
+#[derive(Clone)]
 pub struct Song {
     pub path: PathBuf,
     pub tag: Tag,
     pub song_metadata: SongMetadata,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone)]
 pub struct SongMetadata {
     pub fulltitle: String,
     #[serde(rename = "track")]
@@ -51,4 +52,10 @@ pub struct AlbumMetadata {
 pub struct Playlist {
     pub title: String,
     pub entries: Vec<Value>,
+}
+
+impl From<&Song> for String {
+    fn from(value: &Song) -> Self {
+        value.song_metadata.fulltitle.clone()
+    }
 }

@@ -5,7 +5,8 @@ use std::str;
 
 use spinners::{Spinner, Spinners};
 
-const YT_DLP_ARGS: [&str; 8] = [
+const YT_DLP_ARGS: [&str; 9] = [
+    "--ignore-config",
     "-x",
     "-f",
     "ba",
@@ -27,10 +28,9 @@ pub fn fetch_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
 
     sp.stop_with_newline();
 
-    // Check if command ran correctly
-    json_output.status.exit_ok()?;
-
-    Ok(String::from_utf8(json_output.stdout)?)
+    Ok(String::from_utf8(json_output.stdout).expect(
+        "Could not parse the yt-dlp json. The yt-dlp command probably didn't run correctly",
+    ))
 }
 
 pub fn download_song(yt_dlp_json: &str, dir: &str) -> Result<String, Box<dyn Error>> {
@@ -48,7 +48,7 @@ pub fn download_song(yt_dlp_json: &str, dir: &str) -> Result<String, Box<dyn Err
         .as_mut()
         .expect("Failed to write to yt-dlp stdin");
     stdin.write(&yt_dlp_json.as_bytes())?;
-    download_process.wait()?.exit_ok().expect("Download failed");
+    download_process.wait()?.exit_ok()?;
 
     // Return path of downloaded file
     Ok(get_downloaded_filename(&yt_dlp_json)?)

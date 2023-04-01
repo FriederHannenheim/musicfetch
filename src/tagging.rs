@@ -1,10 +1,17 @@
 use std::error::Error;
 
+use cursive::theme::Theme;
+use cursive::view::Resizable;
+use cursive::views::{
+    Dialog, DummyView, EditView, LinearLayout, ResizedView, ScrollView, SelectView, TextView,
+};
+use cursive::{Cursive, CursiveExt};
 use lofty::{Accessor, Picture, Tag, TagExt};
 
 use dialoguer::{Confirm, Input};
 
 use crate::structs::{Song, SongMetadata};
+use crate::tui::get_song_metadata_layout;
 use crate::Args;
 
 pub fn tag_song(
@@ -32,7 +39,7 @@ pub fn tag_song(
     Ok(song)
 }
 
-fn add_metadata_to_tag(metadata: &SongMetadata, tag: &mut Tag) {
+pub fn add_metadata_to_tag(metadata: &SongMetadata, tag: &mut Tag) {
     if let Some(title) = &metadata.title {
         tag.set_title(title.clone());
     }
@@ -115,4 +122,46 @@ where
         .allow_empty(allow_empty)
         .with_initial_text(initial_text);
     input.interact_text()
+}
+
+pub fn tag_songs_tui(songs: &mut Vec<Song>) {
+    let mut siv = Cursive::default();
+
+    siv.set_theme(Theme::terminal_default());
+
+    let cloned = songs.clone();
+    let filenames = cloned.iter().map(|f| String::from(f));
+
+    let mut song_selection = SelectView::new().on_select(|s, song: &Song| {
+        s.call_on_name("title_text", |v: &mut TextView| {
+            v.set_content(&String::from(song));
+        })
+        .unwrap();
+        s.call_on_name("title", |v: &mut EditView| {
+            v.set_content(song.tag.title().unwrap_or_default());
+        })
+        .unwrap();
+    });
+
+    song_selection.add_all(filenames.zip(songs.clone().into_iter()));
+
+    let scroll_view = ScrollView::new(song_selection);
+
+    siv.add_layer(Dialog::around(
+        LinearLayout::vertical()
+            .child(TextView::new("Edit Tags").center())
+            .child(DummyView.fixed_height(1))
+            .child(
+                LinearLayout::horizontal()
+                    .child(scroll_view)
+                    .child(DummyView.fixed_width(1))
+                    .child(ResizedView::with_fixed_width(
+                        32,
+                        get_song_metadata_layout(&String::from(&songs[0])),
+                    )),
+            ),
+    ));
+
+    siv.run_crossterm()
+        .expect("TUI initialization failed. Try using another Terminal");
 }

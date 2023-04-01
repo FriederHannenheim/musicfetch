@@ -14,6 +14,7 @@ use clap::{ArgAction, ArgGroup, Parser};
 use cursive::theme::Theme;
 use cursive::view::Resizable;
 use cursive::views::{Dialog, EditView};
+use tagging::tag_songs_tui;
 
 use crate::download::{download_song, fetch_yt_dlp_json};
 use crate::structs::{AlbumMetadata, Playlist, Song, SongMetadata};
@@ -96,9 +97,20 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if let Ok(playlist) = serde_json::from_str::<Playlist>(&yt_dlp_json) {
             for song_entry in playlist.entries {
-                let metadata: SongMetadata = serde_json::from_value(song_entry.clone())?;
+                let Ok(metadata): Result<SongMetadata, _> = serde_json::from_value(song_entry.clone()) else {
+                    // Some playlists have unavailable videos which are just 'null' in json
+                    continue;
+                };
                 let json = serde_json::to_string(&song_entry)?;
-                let path = download_song(&json, &args.output_dir)?;
+                let path = download_song(&json, &args.output_dir);
+                let path = match path {
+                    Ok(p) => p,
+                    Err(e) => {
+                        eprint!("Downloading {} failed: {e}", metadata.fulltitle);
+                        continue;
+                    }
+                };
+
                 let tag = tag_for_file(&path.clone().into());
 
                 songs.push(Song {
@@ -132,6 +144,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cover_image = args.cover_url.as_ref().map(|url| fetch_cover_image(&url));
 
     complete_song_metadata(&mut songs, &args)?;
+
+    for song in &mut songs {
+        let tag: &mut Tag = &mut song.tag;
+
+        tagging::add_metadata_to_tag(&song.song_metadata, tag);
+    }
+
+    tag_songs_tui(&mut songs);
 
     for mut song in songs {
         song = tag_song(song, cover_image.clone(), &args)?;
@@ -235,7 +255,8 @@ fn input_album_metadata() -> Result<AlbumMetadata, Box<dyn Error>> {
 
     siv.add_layer(dialog);
 
-    siv.run();
+    siv.run_crossterm()
+        .expect("TUI initialization failed. Try using another Terminal");
 
     let album_metadata = siv.take_user_data().unwrap();
 
