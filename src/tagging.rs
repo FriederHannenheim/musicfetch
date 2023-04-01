@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use cursive::theme::Theme;
-use cursive::view::Resizable;
+use cursive::view::{Resizable, Nameable, ViewWrapper};
 use cursive::views::{
     Dialog, DummyView, EditView, LinearLayout, ResizedView, ScrollView, SelectView, TextView,
 };
@@ -124,6 +124,31 @@ where
     input.interact_text()
 }
 
+macro_rules! set_content_for_field {
+    ($siv:expr, $field:expr, $content:expr) => {
+        $siv.call_on_name($field, |v: &mut EditView| {
+            v.set_content($content);
+        })
+        .unwrap();
+    };
+}
+
+fn set_cursive_fields_for_song(s: &mut Cursive, song: &Song) {
+    s.call_on_name("title_text", |v: &mut TextView| {
+        v.set_content(&String::from(song));
+    })
+    .unwrap();
+    set_content_for_field!(s, "title", song.tag.title().unwrap_or_default());
+    set_content_for_field!(s, "album", song.tag.album().unwrap_or_default());
+    set_content_for_field!(s, "artist", song.tag.artist().unwrap_or_default());
+    set_content_for_field!(s, "year", {
+        let year = song.tag.year().unwrap_or_default();
+        let year = if year == 0 {String::new()} else {year.to_string()};
+        year
+    });
+    set_content_for_field!(s, "album", song.tag.album().unwrap_or_default());
+}
+
 pub fn tag_songs_tui(songs: &mut Vec<Song>) {
     let mut siv = Cursive::default();
 
@@ -132,18 +157,13 @@ pub fn tag_songs_tui(songs: &mut Vec<Song>) {
     let cloned = songs.clone();
     let filenames = cloned.iter().map(|f| String::from(f));
 
-    let mut song_selection = SelectView::new().on_select(|s, song: &Song| {
-        s.call_on_name("title_text", |v: &mut TextView| {
-            v.set_content(&String::from(song));
+    let mut song_selection = SelectView::new()
+        .with_all(filenames.zip(songs.clone().into_iter()))
+        .on_select(|s, song: &Song| {
+            set_cursive_fields_for_song(s, song);
         })
-        .unwrap();
-        s.call_on_name("title", |v: &mut EditView| {
-            v.set_content(song.tag.title().unwrap_or_default());
-        })
-        .unwrap();
-    });
+        .with_name("songlist");
 
-    song_selection.add_all(filenames.zip(songs.clone().into_iter()));
 
     let scroll_view = ScrollView::new(song_selection);
 
@@ -161,7 +181,14 @@ pub fn tag_songs_tui(songs: &mut Vec<Song>) {
                     )),
             ),
     ));
+    
+    // TODO: When opening the tui the metadata for the selected song is not shown
+    siv.call_on_name("songlist", |l: &mut SelectView| {
+        l.set_selection(0);
+    });
 
     siv.run_crossterm()
         .expect("TUI initialization failed. Try using another Terminal");
 }
+
+
