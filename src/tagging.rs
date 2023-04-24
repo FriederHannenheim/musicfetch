@@ -203,6 +203,37 @@ pub fn tag_songs_tui(songs: &mut Vec<Song>) {
                         get_song_metadata_layout(&songs[0]),
                     )),
             )
+            .child(
+                LinearLayout::horizontal()
+                    .child(DummyView.full_width())
+                    .child(TextView::new("Total Tracks:"))
+                    .child(DummyView.fixed_width(11))
+                    .child(
+                        EditView::new()
+                            .content(
+                                songs[0].song_metadata.total_tracks.unwrap_string()
+                            )
+                            .on_edit(|siv, text, _cursor| {
+                                let total_tracks = text
+                                    .chars()
+                                    .filter(|c| c.is_ascii_digit())
+                                    .fold(String::new(), |x, y| x + &y.to_string());
+                                
+                                siv.call_on_name("total_tracks", |view: &mut EditView| {
+                                    view.set_content(&total_tracks);
+                                });
+                                
+                                siv.call_on_name("songlist", |v: &mut SelectView<Song>| {
+                                    for (_lbl, song) in v.iter_mut() {
+                                        song.song_metadata.total_tracks = total_tracks.parse::<u32>().ok();
+                                    }
+                                });
+                            })
+                            .with_name("total_tracks")
+                            .fixed_width(8)
+                    )
+                    .fixed_width(65),
+            )
             .child(Button::new("Save", |siv| siv.quit())),
     ));
 
