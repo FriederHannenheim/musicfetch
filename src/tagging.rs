@@ -1,9 +1,11 @@
 use std::error::Error;
+use std::fmt::Display;
 
 use cursive::theme::Theme;
-use cursive::view::{Resizable, Nameable, ViewWrapper};
+use cursive::view::{Nameable, Resizable};
 use cursive::views::{
-    Dialog, DummyView, EditView, LinearLayout, ResizedView, ScrollView, SelectView, TextView,
+    Button, Dialog, DummyView, EditView, LinearLayout, ResizedView, ScrollView, SelectView,
+    TextView,
 };
 use cursive::{Cursive, CursiveExt};
 use lofty::{Accessor, Picture, Tag, TagExt};
@@ -129,7 +131,7 @@ macro_rules! set_content_for_field {
         $siv.call_on_name($field, |v: &mut EditView| {
             v.set_content($content);
         })
-        .unwrap();
+        .expect(&format!("No cursive field with name '{}'", $field));
     };
 }
 
@@ -138,15 +140,28 @@ fn set_cursive_fields_for_song(s: &mut Cursive, song: &Song) {
         v.set_content(&String::from(song));
     })
     .unwrap();
-    set_content_for_field!(s, "title", song.tag.title().unwrap_or_default());
-    set_content_for_field!(s, "album", song.tag.album().unwrap_or_default());
-    set_content_for_field!(s, "artist", song.tag.artist().unwrap_or_default());
-    set_content_for_field!(s, "year", {
-        let year = song.tag.year().unwrap_or_default();
-        let year = if year == 0 {String::new()} else {year.to_string()};
-        year
-    });
-    set_content_for_field!(s, "album", song.tag.album().unwrap_or_default());
+    set_content_for_field!(
+        s,
+        "title",
+        song.song_metadata.title.clone().unwrap_or_default()
+    );
+    set_content_for_field!(
+        s,
+        "album",
+        song.song_metadata.album.clone().unwrap_or_default()
+    );
+    set_content_for_field!(
+        s,
+        "artist",
+        song.song_metadata.artist.clone().unwrap_or_default()
+    );
+    set_content_for_field!(s, "year", song.song_metadata.year.unwrap_string());
+    set_content_for_field!(
+        s,
+        "genre",
+        song.song_metadata.genre.clone().unwrap_or_default()
+    );
+    set_content_for_field!(s, "track", song.song_metadata.track_no.unwrap_string());
 }
 
 pub fn tag_songs_tui(songs: &mut Vec<Song>) {
@@ -157,15 +172,23 @@ pub fn tag_songs_tui(songs: &mut Vec<Song>) {
     let cloned = songs.clone();
     let filenames = cloned.iter().map(|f| String::from(f));
 
-    let mut song_selection = SelectView::new()
-        .with_all(filenames.zip(songs.clone().into_iter()))
+    let song_selection = SelectView::new()
+        .with_all(
+            filenames
+                .zip(songs.clone().into_iter())
+                .map(|(label, song)| {
+                    (
+                        format!("{} {}", song.song_metadata.track_no.unwrap_string(), label),
+                        song,
+                    )
+                }),
+        )
         .on_select(|s, song: &Song| {
             set_cursive_fields_for_song(s, song);
         })
         .with_name("songlist");
 
-
-    let scroll_view = ScrollView::new(song_selection);
+    let scroll_view = ScrollView::new(song_selection).fixed_width(32);
 
     siv.add_layer(Dialog::around(
         LinearLayout::vertical()
@@ -177,18 +200,31 @@ pub fn tag_songs_tui(songs: &mut Vec<Song>) {
                     .child(DummyView.fixed_width(1))
                     .child(ResizedView::with_fixed_width(
                         32,
-                        get_song_metadata_layout(&String::from(&songs[0])),
+                        get_song_metadata_layout(&songs[0]),
                     )),
-            ),
+            )
+            .child(Button::new("Save", |siv| siv.quit())),
     ));
-    
-    // TODO: When opening the tui the metadata for the selected song is not shown
-    siv.call_on_name("songlist", |l: &mut SelectView| {
-        l.set_selection(0);
-    });
 
     siv.run_crossterm()
         .expect("TUI initialization failed. Try using another Terminal");
 }
 
+pub trait UnwrapString {
+    /// Returns the value as a string or "" if None
+    fn unwrap_string(self) -> String;
+}
 
+impl<T> UnwrapString for Option<T>
+where
+    T: Display,
+{
+    fn unwrap_string(self) -> String {
+        let unwrapped = if let Some(val) = self {
+            val.to_string()
+        } else {
+            String::from("")
+        };
+        unwrapped
+    }
+}

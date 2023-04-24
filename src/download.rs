@@ -18,7 +18,7 @@ const YT_DLP_ARGS: [&str; 9] = [
 ];
 
 pub fn fetch_yt_dlp_json(url: &str) -> Result<String, Box<dyn Error>> {
-    let mut sp = Spinner::new(Spinners::Line, "Fetching Song/Playlist info. For playlists this can take a while depending on your internet speed.".into());
+    let mut sp = Spinner::new(Spinners::Line, "Fetching Song/Playlist info.".into());
     let json_output = Command::new("yt-dlp")
         .arg("-J")
         .arg(&url)

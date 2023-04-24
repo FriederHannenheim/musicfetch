@@ -1,6 +1,7 @@
 #![feature(exit_status_error)]
 #![feature(default_free_fn)]
 #![feature(let_chains)]
+#![feature(is_some_and)]
 
 use std::default::default;
 use std::error::Error;

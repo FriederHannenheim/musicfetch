@@ -12,7 +12,7 @@ pub struct Song {
     pub song_metadata: SongMetadata,
 }
 
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Default, Clone, Eq, PartialEq)]
 pub struct SongMetadata {
     pub fulltitle: String,
     #[serde(rename = "track")]
@@ -56,6 +56,14 @@ pub struct Playlist {
 
 impl From<&Song> for String {
     fn from(value: &Song) -> Self {
+        if value
+            .song_metadata
+            .title
+            .as_ref()
+            .is_some_and(|s| !s.is_empty())
+        {
+            return value.song_metadata.title.clone().unwrap();
+        }
         value.song_metadata.fulltitle.clone()
     }
 }
