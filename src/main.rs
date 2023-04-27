@@ -315,8 +315,8 @@ fn tag_for_file(path: &PathBuf) -> Tag {
     }
 
     // Upgrade ID3v1 to ID3v2
-    if tag.tag_type() == TagType::ID3v1 {
-        tag.re_map(TagType::ID3v2);
+    if tag.tag_type() == TagType::Id3v1 {
+        tag.re_map(TagType::Id3v2);
     }
 
     tag

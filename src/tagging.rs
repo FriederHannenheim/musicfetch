@@ -10,7 +10,7 @@ use cursive::views::{
 use cursive::{Cursive, CursiveExt};
 use lofty::{Accessor, Picture, Tag, TagExt};
 
-use dialoguer::{Confirm, Input};
+
 
 use crate::structs::{Song, SongMetadata};
 use crate::tui::get_song_metadata_layout;
@@ -19,7 +19,7 @@ use crate::Args;
 pub fn tag_song(
     mut song: Song,
     cover: Option<Picture>,
-    settings: &Args,
+    _settings: &Args,
 ) -> Result<Song, Box<dyn Error>> {
     let mut tag = song.tag;
 
