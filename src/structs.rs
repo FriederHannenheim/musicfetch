@@ -1,18 +1,18 @@
 use std::path::PathBuf;
 
-use id3::Tag;
+use lofty::Tag;
 
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct Song {
     pub path: PathBuf,
-    pub tag: Option<Tag>,
+    pub tag: Tag,
     pub song_metadata: SongMetadata,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone, Eq, PartialEq)]
 pub struct SongMetadata {
     pub fulltitle: String,
     #[serde(rename = "track")]
@@ -20,7 +20,7 @@ pub struct SongMetadata {
     pub album: Option<String>,
     pub artist: Option<String>,
     #[serde(default, rename = "release_year")]
-    pub year: Option<i32>,
+    pub year: Option<u32>,
     #[serde(skip)]
     pub genre: Option<String>,
     #[serde(skip)]
@@ -44,7 +44,7 @@ impl SongMetadata {
 pub struct AlbumMetadata {
     pub album_title: String,
     pub artist: String,
-    pub year: i32,
+    pub year: u32,
     pub genre: String,
 }
 
@@ -52,4 +52,18 @@ pub struct AlbumMetadata {
 pub struct Playlist {
     pub title: String,
     pub entries: Vec<Value>,
+}
+
+impl From<&Song> for String {
+    fn from(value: &Song) -> Self {
+        if value
+            .song_metadata
+            .title
+            .as_ref()
+            .is_some_and(|s| !s.is_empty())
+        {
+            return value.song_metadata.title.clone().unwrap();
+        }
+        value.song_metadata.fulltitle.clone()
+    }
 }

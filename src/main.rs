@@ -1,6 +1,7 @@
 #![feature(exit_status_error)]
 #![feature(default_free_fn)]
 #![feature(let_chains)]
+#![feature(is_some_and)]
 
 use std::default::default;
 use std::error::Error;
@@ -12,15 +13,15 @@ use std::path::{Path, PathBuf};
 
 use clap::{ArgAction, ArgGroup, Parser};
 use cursive::theme::Theme;
-use cursive::view::{Nameable, Resizable};
-use cursive::views::{Dialog, EditView, LinearLayout, TextView};
+use cursive::view::Resizable;
+use cursive::views::{Dialog, EditView};
+use tagging::tag_songs_tui;
 
 use crate::download::{download_song, fetch_yt_dlp_json};
 use crate::structs::{AlbumMetadata, Playlist, Song, SongMetadata};
 use crate::tagging::tag_song;
 
-use id3::frame::{Picture, PictureType};
-use id3::{Tag, TagLike};
+use lofty::{Accessor, MimeType, Picture, PictureType, Probe, Tag, TagExt, TagType, TaggedFileExt};
 
 use regex::Regex;
 
@@ -97,10 +98,21 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if let Ok(playlist) = serde_json::from_str::<Playlist>(&yt_dlp_json) {
             for song_entry in playlist.entries {
-                let metadata: SongMetadata = serde_json::from_value(song_entry.clone())?;
+                let Ok(metadata): Result<SongMetadata, _> = serde_json::from_value(song_entry.clone()) else {
+                    // Some playlists have unavailable videos which are just 'null' in json
+                    continue;
+                };
                 let json = serde_json::to_string(&song_entry)?;
-                let path = download_song(&json, &args.output_dir)?;
-                let tag = Tag::read_from_path(&path).ok();
+                let path = download_song(&json, &args.output_dir);
+                let path = match path {
+                    Ok(p) => p,
+                    Err(e) => {
+                        eprint!("Downloading {} failed: {e}", metadata.fulltitle);
+                        continue;
+                    }
+                };
+
+                let tag = tag_for_file(&path.clone().into());
 
                 songs.push(Song {
                     path: path.into(),
@@ -111,7 +123,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         if let Ok(song_metadata) = serde_json::from_str::<SongMetadata>(&yt_dlp_json) {
             let path = download_song(&yt_dlp_json, &args.output_dir)?;
-            let tag = Tag::read_from_path(&path).ok();
+            let tag = tag_for_file(&path.clone().into());
 
             songs.push(Song {
                 path: path.into(),
@@ -121,7 +133,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     for path in &args.files {
-        let tag = Tag::read_from_path(&path).ok();
+        let tag = tag_for_file(path);
 
         songs.push(Song {
             path: path.clone(),
@@ -134,6 +146,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     complete_song_metadata(&mut songs, &args)?;
 
+    for song in &mut songs {
+        let tag: &mut Tag = &mut song.tag;
+
+        tagging::add_metadata_to_tag(&song.song_metadata, tag);
+    }
+
+    tag_songs_tui(&mut songs);
+
     for mut song in songs {
         song = tag_song(song, cover_image.clone(), &args)?;
 
@@ -142,7 +162,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut out_path = format!(
                 "{}{}.mp3",
                 &args.output_dir,
-                &sanitize_and_remove_leading_dots(song.tag.as_ref().unwrap().title().unwrap())
+                &sanitize_and_remove_leading_dots(&song.tag.title().unwrap())
             );
 
             let mut i = 1;
@@ -150,7 +170,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 out_path = format!(
                     "{}{} ({}).mp3",
                     &args.output_dir,
-                    &sanitize_and_remove_leading_dots(song.tag.as_ref().unwrap().title().unwrap()),
+                    &sanitize_and_remove_leading_dots(&song.tag.title().unwrap()),
                     i
                 );
                 i += 1;
@@ -218,7 +238,7 @@ fn input_album_metadata() -> Result<AlbumMetadata, Box<dyn Error>> {
                 .unwrap();
             let year = s
                 .call_on_name("year", |v: &mut EditView| {
-                    v.get_content().parse::<i32>().unwrap()
+                    v.get_content().parse::<u32>().unwrap()
                 })
                 .unwrap();
             let genre = s
@@ -236,7 +256,8 @@ fn input_album_metadata() -> Result<AlbumMetadata, Box<dyn Error>> {
 
     siv.add_layer(dialog);
 
-    siv.run();
+    siv.run_crossterm()
+        .expect("TUI initialization failed. Try using another Terminal");
 
     let album_metadata = siv.take_user_data().unwrap();
 
@@ -252,21 +273,57 @@ pub fn fetch_cover_image(url: &str) -> Picture {
     let mime_type = get_mime_type(url)
         .expect("Failed to find file extension in cover url. Make sure it is a valid image url");
 
-    Picture {
-        mime_type,
-        picture_type: PictureType::CoverFront,
-        description: "Cover".to_owned(),
-        data: resp.as_bytes().into(),
-    }
+    Picture::new_unchecked(PictureType::CoverFront, mime_type, None, resp.into_bytes())
 }
 
 // TODO: check if file extension is an image
-fn get_mime_type(url: &str) -> Option<String> {
+fn get_mime_type(url: &str) -> Option<MimeType> {
     let re = Regex::new(r"\.(\w{3,4})(?:$|\?)").unwrap();
     let captures = re.captures(url)?;
     let file_extension = captures.get(1)?.as_str();
 
-    Some(format!("image/{}", file_extension))
+    let mime_text = format!("image/{}", file_extension);
+    Some(MimeType::from_str(&mime_text))
+}
+/// Get or create tag for the file in `path`. Will strip all other tags
+fn tag_for_file(path: &PathBuf) -> Tag {
+    let mut tagged_file = Probe::open(path)
+        .expect("File not found")
+        .read()
+        .expect("Failed to read file");
+
+    let mut tag = match tagged_file.primary_tag() {
+        Some(primary_tag) => primary_tag,
+        None => {
+            if let Some(first_tag) = tagged_file.first_tag() {
+                first_tag
+            } else {
+                let tag_type = tagged_file.primary_tag_type();
+
+                tagged_file.insert_tag(Tag::new(tag_type));
+                tagged_file.primary_tag_mut().unwrap()
+            }
+        }
+    }
+    .clone();
+
+    // TODO: This should be moved to when the tag is written
+    for old_tag in tagged_file.tags() {
+        if old_tag.remove_from_path(path).is_err() {
+            println!(
+                "Unable to remove {:?} tag from {}",
+                old_tag.tag_type(),
+                path.display()
+            );
+        }
+    }
+
+    // Upgrade ID3v1 to ID3v2
+    if tag.tag_type() == TagType::ID3v1 {
+        tag.re_map(TagType::ID3v2);
+    }
+
+    tag
 }
 
 #[test]
