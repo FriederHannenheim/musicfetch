@@ -1,3 +1,0 @@
-ncurses ui for tagging
-man page
-Allow splitting album videos
