@@ -1,6 +1,6 @@
 [package]
 name = "musicfetch"
-version = "0.1.1"
+version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-clap = { version = "4.0", features = ["derive"] }
 lofty = { git = "https://github.com/Serial-ATA/lofty-rs.git" }
 regex = "1.7"
 minreq = { version = "2.6.0", features = ["https", "punycode"] }
@@ -18,3 +17,7 @@ sanitize-filename = "0.4.0"
 cursive = { version = "0.20.0", features = [
     "crossterm-backend",
 ], default-features = false }
+toml = "0.7"
+phf = { version = "0.11.1", features = ["macros"] }
+lexopt = "0.3.0"
+anyhow = "1.0"
