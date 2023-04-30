@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use anyhow::Result;
-use phf::phf_map;
+use anyhow::{Ok, Result, bail};
 use serde_json::Value;
 
 use self::{infocopy::Infocopy, jsonfetch::Jsonfetch};
@@ -9,6 +8,7 @@ use self::{infocopy::Infocopy, jsonfetch::Jsonfetch};
 mod infocopy;
 mod jsonfetch;
 
+// TODO: Rework deps to take Vec<String> and panic if dependencies are not met / return if dependencies met
 pub trait Module {
     fn name() -> String;
 
@@ -17,29 +17,31 @@ pub trait Module {
     fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()>;
 }
 
-macro_rules! methods {
-    ($module:ty) => {
-        <$module>::name() => (<$module>::deps, <$module>::run),
+macro_rules! match_module {
+    (
+        $match_var:ident,
+        $(
+            $module:ty
+        )
+        ,
+        +
+    ) => {
+        {
+            $(
+                if $match_var == <$module>::name() {
+                    return Ok((<$module>::deps, <$module>::run));
+                }
+            )*
+            bail!("Error in config: no module named {}", $match_var)
+        }
     };
 }
 
 pub fn get_module(
     name: &str,
-) -> (
+) -> Result<(
     fn() -> Vec<String>,
     fn(Arc<Mutex<Value>>, Arc<Mutex<Value>>) -> Result<()>,
-) {
-    match name {
-        methods!(Jsonfetch)
-        module => panic!("Module not found {module}"),
-    }
+)> {
+    match_module!(name, Jsonfetch, Infocopy)
 }
-/*
-pub const MODULES: phf::Map<
-    &'static str,
-> = phf_map! {
-    Jsonfetch::name() => (Jsonfetch::deps, Jsonfetch::run)
-    // methods!(Jsonfetch),
-    // methods!(Infocopy)
-};
-*/

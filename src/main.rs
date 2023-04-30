@@ -1,3 +1,5 @@
+#![feature(more_qualified_paths)]
+
 use std::{
     fs,
     sync::{Arc, Mutex},
@@ -53,9 +55,7 @@ pub fn run_stages(global_data: Arc<Mutex<Value>>, song_data: Arc<Mutex<Value>>) 
             .map(|v| v.as_str().unwrap());
 
         for module in stage_modules.clone() {
-            let module_fn = modules::MODULES
-                .get(module)
-                .expect(&format!("Error in config: No module named {}", module));
+            let module_fn = modules::get_module(module).unwrap();
 
             for dependency in module_fn.0() {
                 if !modules_ran.contains(&dependency) {

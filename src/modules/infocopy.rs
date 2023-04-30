@@ -1,21 +1,28 @@
 use std::sync::{Arc, Mutex};
 
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use anyhow::Result;
+
+use crate::modules::jsonfetch::Jsonfetch;
 
 use super::Module;
 
 pub struct Infocopy;
 
 impl Module for Infocopy {
-    fn deps() -> Vec<String> {
-        vec!["jsonfetch".to_string()]
+    fn name() -> String {
+        String::from("infocopy")
     }
 
-    fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
+    fn deps() -> Vec<String> {
+        vec![Jsonfetch::name()]
+    }
+
+    fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
         let mut songs = songs.lock().unwrap();
         let mut songs = songs.as_array_mut().unwrap();
+
         Ok(())
     }
 }
