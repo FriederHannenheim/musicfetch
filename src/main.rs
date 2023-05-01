@@ -29,8 +29,8 @@ fn main() -> Result<()> {
 
     run_stages(Arc::clone(&global_data), Arc::clone(&song_data));
 
-    println!("{:?}", *global_data.lock().unwrap());
-    // println!("{}", song_data.lock().unwrap().to_string());
+    // println!("{:?}", *global_data.lock().unwrap());
+    println!("{}", song_data.lock().unwrap().to_string());
 
     Ok(())
 }
@@ -52,10 +52,10 @@ pub fn run_stages(global_data: Arc<Mutex<Value>>, song_data: Arc<Mutex<Value>>) 
             .as_array()
             .unwrap()
             .iter()
-            .map(|v| v.as_str().unwrap());
+            .map(|v| v.as_str().unwrap().to_owned());
 
         for module in stage_modules.clone() {
-            let module_fn = modules::get_module(module).unwrap();
+            let module_fn = modules::get_module(&module).unwrap();
 
             for dependency in module_fn.0() {
                 if !modules_ran.contains(&dependency) {
@@ -67,7 +67,7 @@ pub fn run_stages(global_data: Arc<Mutex<Value>>, song_data: Arc<Mutex<Value>>) 
             let _songs = Arc::clone(&song_data);
 
             let handle = thread::spawn(move || {
-                module_fn.1(_global, _songs).unwrap();
+                module_fn.1(_global, _songs).expect(&format!("Error in module {}:", module))
             });
             handles.push(handle);
         }

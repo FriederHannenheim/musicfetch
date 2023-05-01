@@ -6,9 +6,6 @@ Allow splitting album videos
 - Total Tracks field
 - Musicfetch banner
 
-# Ideas
-- Tokio, one thread for downloading/tagging etc and one for UI
-
 ## Make the system more modular
 ### The Dict, or 2 Dicts
 One dict with global values and one with values for each song. Maybe use Serde json values for the dict
@@ -16,10 +13,10 @@ Song dict will look like this:
 ```json
 "songs": [
     {
-        "yt_dlp_values": {
+        "yt_dlp": {
             ...
         },
-        "tag_values": {
+        "songinfo": {
             "title": "Never Gonna Give You Up",
             "artist": "Rick Astley",
         }
@@ -30,8 +27,13 @@ Global dict will look like this:
 ```json
 "args": [
     ...
+],
+"config": [
+
 ]
 ```
+Musicfetch directory in which the user can put multiple configs. Config can be selected using --config
+
 ### Workflow
 - Central Dict with values is passed to all modules
 - First there will be a list of urls in the dict
@@ -50,6 +52,7 @@ this way the user doesn't have to wait for too long to edit
 - Yt-Title to Song Title
 - Custom script: Runs a user-specified script which will get the dict passed as json in stdin and needs to return the dict as json in the stdout
 - Song select: Remove certain songs that should not be downloaded
+- Discogs / Musicbrainz metadata download
 
 ### Parralelizing
 Problem: I want modules to be able to run in parallel but some modules require information from other modules
