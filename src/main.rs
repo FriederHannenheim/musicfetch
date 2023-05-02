@@ -21,7 +21,7 @@ use crate::download::{download_song, fetch_yt_dlp_json};
 use crate::structs::{AlbumMetadata, Playlist, Song, SongMetadata};
 use crate::tagging::tag_song;
 
-use lofty::{Accessor, MimeType, Picture, PictureType, Probe, Tag, TagExt, TagType, TaggedFileExt};
+use lofty::{MimeType, Picture, PictureType, Probe, Tag, TagExt, TagType, TaggedFileExt};
 
 use regex::Regex;
 
@@ -148,15 +148,20 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     songs = tag_songs_tui(songs);
 
+
     for mut song in songs {
         song = tag_song(song, cover_image.clone(), &args)?;
 
         if args.rename {
+            let Some(title) = song.song_metadata.title else {
+                panic!("\nSong {} has no title. Please enter a title in the TUI", String::from(song.song_metadata.fulltitle));
+            };
+
             // TODO: Currently all files are mp3 but in future this should not be hardcoded
             let mut out_path = format!(
                 "{}{}.mp3",
                 &args.output_dir,
-                &sanitize_and_remove_leading_dots(&song.tag.title().expect("Song has no title"))
+                &sanitize_and_remove_leading_dots(&title)
             );
 
             let mut i = 1;
@@ -166,7 +171,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 out_path = format!(
                     "{}{} ({}).mp3",
                     &args.output_dir,
-                    &sanitize_and_remove_leading_dots(&song.tag.title().unwrap()),
+                    &sanitize_and_remove_leading_dots(&title),
                     i
                 );
                 i += 1;
@@ -202,8 +207,6 @@ fn get_yt_dlp_json(args: &Args) -> Result<String, Box<dyn Error>> {
 fn complete_song_metadata(songs: &mut Vec<Song>, args: &Args) -> Result<(), Box<dyn Error>> {
     if args.album && !args.yes {
         let album_metadata = input_album_metadata()?;
-
-        println!("{:?}", album_metadata);
 
         let song_count = songs.len();
         for (i, song) in songs.iter_mut().enumerate() {
