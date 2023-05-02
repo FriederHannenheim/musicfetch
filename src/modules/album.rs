@@ -1,4 +1,4 @@
-use anyhow::{Ok, bail};
+use anyhow::{bail, Ok};
 use cursive::{
     theme::Theme,
     view::{Nameable, Resizable},
@@ -67,7 +67,6 @@ impl Module for Album {
             }
         }
 
-
         let metadata = show_album_metadata_ui(album);
 
         let mut songs = songs.lock().unwrap();
@@ -85,45 +84,45 @@ impl Module for Album {
 }
 
 fn show_album_metadata_ui(album: AlbumMetadata) -> AlbumMetadata {
-       let mut siv = Cursive::default();
+    let mut siv = Cursive::default();
 
-        siv.set_theme(Theme::terminal_default());
+    siv.set_theme(Theme::terminal_default());
 
-        let inputs = get_album_metadata_layout(album);
+    let inputs = get_album_metadata_layout(album);
 
-        let dialog = Dialog::around(inputs)
-            .button("Ok", |s| {
-                let title = s
-                    .call_on_name("album", |v: &mut EditView| v.get_content().to_string())
-                    .unwrap();
-                let artist = s
-                    .call_on_name("artist", |v: &mut EditView| v.get_content().to_string())
-                    .unwrap();
-                let year = s
-                    .call_on_name("year", |v: &mut EditView| {
-                        // TODO: Fix crash when no year is entered
-                        v.get_content().parse::<u32>().unwrap()
-                    })
-                    .unwrap();
-                let genre = s
-                    .call_on_name("genre", |v: &mut EditView| v.get_content().to_string())
-                    .unwrap();
-                s.set_user_data(AlbumMetadata {
-                    title,
-                    artist,
-                    year,
-                    genre,
-                });
-                s.quit();
-            })
-            .min_width(40);
+    let dialog = Dialog::around(inputs)
+        .button("Ok", |s| {
+            let title = s
+                .call_on_name("album", |v: &mut EditView| v.get_content().to_string())
+                .unwrap();
+            let artist = s
+                .call_on_name("artist", |v: &mut EditView| v.get_content().to_string())
+                .unwrap();
+            let year = s
+                .call_on_name("year", |v: &mut EditView| {
+                    // TODO: Fix crash when no year is entered
+                    v.get_content().parse::<u32>().unwrap()
+                })
+                .unwrap();
+            let genre = s
+                .call_on_name("genre", |v: &mut EditView| v.get_content().to_string())
+                .unwrap();
+            s.set_user_data(AlbumMetadata {
+                title,
+                artist,
+                year,
+                genre,
+            });
+            s.quit();
+        })
+        .min_width(40);
 
-        siv.add_layer(dialog);
+    siv.add_layer(dialog);
 
-        siv.run_crossterm()
-            .expect("TUI initialization failed. Try using another Terminal");
+    siv.run_crossterm()
+        .expect("TUI initialization failed. Try using another Terminal");
 
-        siv.take_user_data().unwrap()
+    siv.take_user_data().unwrap()
 }
 
 fn get_album_metadata_layout(album: AlbumMetadata) -> LinearLayout {
@@ -157,4 +156,3 @@ fn get_album_metadata_layout(album: AlbumMetadata) -> LinearLayout {
         .child(TextView::new("Genre"))
         .child(EditView::new().content(album.genre).with_name("genre"))
 }
-

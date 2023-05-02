@@ -7,12 +7,11 @@ use crate::modules::jsonfetch::Jsonfetch;
 
 use super::Module;
 
-
 pub struct Songcounter;
 
 impl Module for Songcounter {
     fn name() -> String {
-       String::from("trackcounter") 
+        String::from("trackcounter")
     }
 
     fn deps() -> Vec<String> {
