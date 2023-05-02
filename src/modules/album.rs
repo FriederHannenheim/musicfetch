@@ -147,7 +147,7 @@ fn get_album_metadata_layout(album: AlbumMetadata) -> LinearLayout {
                             t.chars()
                                 .filter(|c| c.is_ascii_digit())
                                 .take(4)
-                                .fold(String::new(), |x, y| x + &y.to_string()),
+                                .collect::<String>()
                         );
                     });
                 })

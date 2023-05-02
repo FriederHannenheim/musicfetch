@@ -3,25 +3,25 @@ use std::sync::{Arc, Mutex};
 use cursive::{
     direction::Direction,
     theme::Theme,
-    view::{Nameable, Resizable},
+    view::Resizable,
     views::{
-        Button, Dialog, DummyView, EditView, LinearLayout, ResizedView, ScrollView, SelectView,
+        Button, Dialog, DummyView, LinearLayout, ResizedView, SelectView,
         TextView,
     },
     Cursive, CursiveExt, View,
 };
 use serde_json::Value;
 
-use crate::{modules::jsonfetch::Jsonfetch, set_song_field};
+use crate::modules::jsonfetch::Jsonfetch;
 
 use self::{
     layout::{get_selectview, get_song_metadata_layout, get_total_tracks_input},
-    util::{get_song_field, song_to_string, compare_songs_by_track_no},
+    util::{get_field_content, song_to_string, compare_songs_by_track_no},
 };
 
 use super::Module;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 mod layout;
 mod util;
@@ -77,10 +77,14 @@ pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
                         get_song_metadata_layout(&songs[0])?,
                     )),
             )
-            .child(get_total_tracks_input(get_song_field(
-                &songs[0],
-                "total_tracks",
-            )?))
+            .child(
+                get_total_tracks_input(
+                        get_field_content(
+                        &songs[0],
+                        "total_tracks",
+                    ).unwrap_or_default()
+                )
+            )
             .child(Button::new("Save", |siv| {
                 let _songs = siv
                     .call_on_name("songlist", |v: &mut SelectView<Value>| {
@@ -89,6 +93,9 @@ pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
                             .collect::<Vec<Value>>()
                     })
                     .expect("Failed getting songlist from selectview");
+
+                siv.set_user_data(_songs);
+
                 siv.quit();
             })),
     ));
@@ -123,7 +130,7 @@ fn refresh_songlist_labels(songlist: &mut SelectView<Value>) {
         label.compact();
         label.append(format!(
             "{} {}",
-            get_song_field(song, "track_no").unwrap(),
+            get_field_content(song, "track_no").unwrap_or_default(),
             song_to_string(song)
         ));
     }

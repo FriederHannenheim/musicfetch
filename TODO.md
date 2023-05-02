@@ -1,4 +1,5 @@
-tui for tagging
+# !!! REMOVE ALL TODOS BEFORE RELEASING REWORK !!!
+
 man page
 Allow splitting album videos
 
