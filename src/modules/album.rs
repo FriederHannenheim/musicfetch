@@ -101,6 +101,7 @@ fn show_album_metadata_ui(album: AlbumMetadata) -> AlbumMetadata {
                     .unwrap();
                 let year = s
                     .call_on_name("year", |v: &mut EditView| {
+                        // TODO: Fix crash when no year is entered
                         v.get_content().parse::<u32>().unwrap()
                     })
                     .unwrap();

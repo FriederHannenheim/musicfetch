@@ -3,13 +3,15 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Ok, Result};
 use serde_json::Value;
 
-use crate::modules::album::Album;
+use crate::modules::{album::Album, songcounter::Songcounter, tagui::TagUI};
 
 use self::{infocopy::Infocopy, jsonfetch::Jsonfetch};
 
 mod album;
 mod infocopy;
 mod jsonfetch;
+mod songcounter;
+mod tagui;
 
 // TODO: Rework deps to take Vec<String> and panic if dependencies are not met / return if dependencies met
 pub trait Module {
@@ -46,5 +48,5 @@ pub fn get_module(
     fn() -> Vec<String>,
     fn(Arc<Mutex<Value>>, Arc<Mutex<Value>>) -> Result<()>,
 )> {
-    match_module!(name, Jsonfetch, Infocopy, Album)
+    match_module!(name, Jsonfetch, Infocopy, Album, Songcounter, TagUI)
 }
