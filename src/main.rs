@@ -146,13 +146,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     complete_song_metadata(&mut songs, &args)?;
 
-    for song in &mut songs {
-        let tag: &mut Tag = &mut song.tag;
-
-        tagging::add_metadata_to_tag(&song.song_metadata, tag);
-    }
-
-    tag_songs_tui(&mut songs);
+    songs = tag_songs_tui(songs);
 
     for mut song in songs {
         song = tag_song(song, cover_image.clone(), &args)?;
@@ -162,11 +156,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut out_path = format!(
                 "{}{}.mp3",
                 &args.output_dir,
-                &sanitize_and_remove_leading_dots(&song.tag.title().unwrap())
+                &sanitize_and_remove_leading_dots(&song.tag.title().expect("Song has no title"))
             );
 
             let mut i = 1;
-            while Path::new(&out_path).exists() && Path::new(&song.path) != Path::new(&out_path) {
+            while Path::new(&out_path).exists()
+                && Path::new(&song.path).canonicalize()? != Path::new(&out_path).canonicalize()?
+            {
                 out_path = format!(
                     "{}{} ({}).mp3",
                     &args.output_dir,
@@ -319,8 +315,8 @@ fn tag_for_file(path: &PathBuf) -> Tag {
     }
 
     // Upgrade ID3v1 to ID3v2
-    if tag.tag_type() == TagType::ID3v1 {
-        tag.re_map(TagType::ID3v2);
+    if tag.tag_type() == TagType::Id3v1 {
+        tag.re_map(TagType::Id3v2);
     }
 
     tag

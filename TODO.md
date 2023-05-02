@@ -47,9 +47,11 @@ this way the user doesn't have to wait for too long to edit
 
 ### Ideas for modules:
 - jsonfetch: Inserts the yt-dlp json for each song into the dict
-- Yt-Title to Song Title
+- title-to-title: Yt-Title to Song Title
 - Custom script: Runs a user-specified script which will get the dict passed as json in stdin and needs to return the dict as json in the stdout
 - Song select: Remove certain songs that should not be downloaded
+- rename: renames the files
+- tagger
 
 ### Parralelizing
 Problem: I want modules to be able to run in parallel but some modules require information from other modules

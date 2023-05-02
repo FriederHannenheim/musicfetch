@@ -10,7 +10,7 @@ use cursive::views::{
 use cursive::{Cursive, CursiveExt};
 use lofty::{Accessor, Picture, Tag, TagExt};
 
-use dialoguer::{Confirm, Input};
+
 
 use crate::structs::{Song, SongMetadata};
 use crate::tui::get_song_metadata_layout;
@@ -19,15 +19,11 @@ use crate::Args;
 pub fn tag_song(
     mut song: Song,
     cover: Option<Picture>,
-    settings: &Args,
+    _settings: &Args,
 ) -> Result<Song, Box<dyn Error>> {
     let mut tag = song.tag;
 
     add_metadata_to_tag(&song.song_metadata, &mut tag);
-
-    if !settings.yes {
-        tag_with_input(&mut tag, &song.path.display().to_string())?;
-    }
 
     if let Some(cover) = cover {
         tag.push_picture(cover);
@@ -61,69 +57,6 @@ pub fn add_metadata_to_tag(metadata: &SongMetadata, tag: &mut Tag) {
     // If the tag already has track_no/total_tracks ignore the generated one
     if let Some(track_no) = metadata.track_no && !tag.track().is_some() { tag.set_track(track_no); }
     if let Some(total_tracks) = metadata.total_tracks && !tag.track_total().is_some() { tag.set_track_total(total_tracks); }
-}
-
-fn tag_with_input(tag: &mut Tag, path: &str) -> Result<(), Box<dyn Error>> {
-    loop {
-        println!("\n{}", path);
-        metadata_prompt(tag)?;
-        if Confirm::new()
-            .with_prompt("Metadata correct?")
-            .default(true)
-            .interact()?
-        {
-            break;
-        }
-    }
-    Ok(())
-}
-
-fn metadata_prompt(tag: &mut Tag) -> Result<(), Box<dyn Error>> {
-    let title: String = prompt("Title", false, tag.title().unwrap_or_default().to_string())?;
-    let album: String = prompt("Album", false, tag.album().unwrap_or_default().to_string())?;
-    let artist: String = prompt(
-        "Artist",
-        false,
-        tag.artist().unwrap_or_default().to_string(),
-    )?;
-    let year: u32 = prompt("Year", false, to_string_or_empty(tag.year()))?;
-    let genre: String = prompt("Genre", true, tag.genre().unwrap_or_default().to_string())?;
-    let track: u32 = prompt("Track No.", false, to_string_or_empty(tag.track()))?;
-    let total_tracks: u32 = prompt("Total Tracks", false, to_string_or_empty(tag.track_total()))?;
-    tag.set_title(title);
-    tag.set_album(album);
-    tag.set_artist(artist);
-    tag.set_year(year);
-    tag.set_genre(genre);
-    tag.set_track(track);
-    tag.set_track_total(total_tracks);
-
-    Ok(())
-}
-
-fn to_string_or_empty<T: ToString>(option: Option<T>) -> String {
-    if let Some(value) = option {
-        value.to_string()
-    } else {
-        String::new()
-    }
-}
-
-fn prompt<T: std::fmt::Display + Clone + std::str::FromStr>(
-    prompt: &str,
-    allow_empty: bool,
-    initial_text: String,
-) -> Result<T, std::io::Error>
-where
-    <T as std::str::FromStr>::Err: std::fmt::Display,
-    <T as std::str::FromStr>::Err: std::fmt::Debug,
-{
-    let mut input = Input::new();
-    input
-        .with_prompt(prompt)
-        .allow_empty(allow_empty)
-        .with_initial_text(initial_text);
-    input.interact_text()
 }
 
 macro_rules! set_content_for_field {
@@ -164,7 +97,7 @@ fn set_cursive_fields_for_song(s: &mut Cursive, song: &Song) {
     set_content_for_field!(s, "track", song.song_metadata.track_no.unwrap_string());
 }
 
-pub fn tag_songs_tui(songs: &mut Vec<Song>) {
+pub fn tag_songs_tui(songs: Vec<Song>) -> Vec<Song> {
     let mut siv = Cursive::default();
 
     siv.set_theme(Theme::terminal_default());
@@ -210,35 +143,47 @@ pub fn tag_songs_tui(songs: &mut Vec<Song>) {
                     .child(DummyView.fixed_width(11))
                     .child(
                         EditView::new()
-                            .content(
-                                songs[0].song_metadata.total_tracks.unwrap_string()
-                            )
+                            .content(songs[0].song_metadata.total_tracks.unwrap_string())
                             .on_edit(|siv, text, _cursor| {
                                 let total_tracks = text
                                     .chars()
                                     .filter(|c| c.is_ascii_digit())
                                     .fold(String::new(), |x, y| x + &y.to_string());
-                                
+
                                 siv.call_on_name("total_tracks", |view: &mut EditView| {
                                     view.set_content(&total_tracks);
                                 });
-                                
+
                                 siv.call_on_name("songlist", |v: &mut SelectView<Song>| {
                                     for (_lbl, song) in v.iter_mut() {
-                                        song.song_metadata.total_tracks = total_tracks.parse::<u32>().ok();
+                                        song.song_metadata.total_tracks =
+                                            total_tracks.parse::<u32>().ok();
                                     }
                                 });
                             })
                             .with_name("total_tracks")
-                            .fixed_width(8)
+                            .fixed_width(8),
                     )
                     .fixed_width(65),
             )
-            .child(Button::new("Save", |siv| siv.quit())),
+            .child(Button::new("Save", |siv| {
+                let _songs = siv
+                    .call_on_name("songlist", |v: &mut SelectView<Song>| {
+                        v.iter()
+                            .map(|(_lbl, song)| song.to_owned())
+                            .collect::<Vec<Song>>()
+                    })
+                    .expect("Failed getting songlist from selectview");
+                siv.set_user_data(_songs);
+                siv.quit();
+            })),
     ));
 
     siv.run_crossterm()
         .expect("TUI initialization failed. Try using another Terminal");
+
+    siv.take_user_data::<Vec<Song>>()
+        .expect("Could not get Cursive user data.")
 }
 
 pub trait UnwrapString {
