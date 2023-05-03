@@ -4,19 +4,19 @@ use serde_json::Value;
 
 use anyhow::{bail, Ok, Result};
 
-use crate::modules::jsonfetch::Jsonfetch;
+use crate::modules::jsonfetch::JsonfetchModule;
 
 use super::Module;
 
-pub struct Infocopy;
+pub struct InfocopyModule;
 
-impl Module for Infocopy {
+impl Module for InfocopyModule {
     fn name() -> String {
         String::from("infocopy")
     }
 
     fn deps() -> Vec<String> {
-        vec![Jsonfetch::name()]
+        vec![JsonfetchModule::name()]
     }
 
     fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {

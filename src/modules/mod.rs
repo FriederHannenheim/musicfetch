@@ -3,11 +3,12 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Ok, Result};
 use serde_json::Value;
 
-use crate::modules::{album::Album, songcounter::Songcounter, tagui::TagUI};
+use crate::modules::{album::AlbumModule, songcounter::SongcounterModule, tagui::TagUIModule};
 
-use self::{infocopy::Infocopy, jsonfetch::Jsonfetch};
+use self::{infocopy::InfocopyModule, jsonfetch::JsonfetchModule};
 
 mod album;
+mod download;
 mod infocopy;
 mod jsonfetch;
 mod songcounter;
@@ -48,5 +49,5 @@ pub fn get_module(
     fn() -> Vec<String>,
     fn(Arc<Mutex<Value>>, Arc<Mutex<Value>>) -> Result<()>,
 )> {
-    match_module!(name, Jsonfetch, Infocopy, Album, Songcounter, TagUI)
+    match_module!(name, JsonfetchModule, InfocopyModule, AlbumModule, SongcounterModule, TagUIModule)
 }

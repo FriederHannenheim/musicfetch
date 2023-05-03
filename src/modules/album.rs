@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use anyhow::{bail, Ok};
 use cursive::{
     theme::Theme,
@@ -7,7 +9,7 @@ use cursive::{
 };
 use serde_json::Value;
 
-use crate::modules::jsonfetch::Jsonfetch;
+use crate::modules::jsonfetch::JsonfetchModule;
 
 use super::Module;
 
@@ -15,44 +17,41 @@ use super::Module;
 struct AlbumMetadata {
     title: String,
     artist: String,
-    year: u32,
+    year: Option<u64>,
     genre: String,
 }
 
 macro_rules! get_value_if_exists {
     ($metadata_key:expr, $key:expr, $song:ident) => {
-        if let Some(value) = $song["songinfo"].get($key) {
-            let Some(value) = value.as_str() else {
-                bail!("Error in songinfo for {}: {} value is not a string", $song["yt_dlp"]["title"], $key);
-            };
-            $metadata_key = value.to_owned()
+        if let Value::String(value) = &$song["songinfo"][$key] {
+            $metadata_key = value.to_owned();
         }
     };
 
     ($metadata_key:expr, $key:expr, $song:ident, $conversion:ident) => {
-        if let Some(value) = $song["songinfo"].get($key) {
+        if let Value::Number(value) = &$song["songinfo"][$key] {
             let Some(value) = value.$conversion() else {
-                bail!("Error in songinfo for {}: {} value is not a string", $song["yt_dlp"]["title"], $key);
+                bail!("Error in songinfo for {}: {} value is not a unsigned integer", $song["yt_dlp"][$key], $key);
             };
-            $metadata_key = value as u32;
+            $metadata_key = Some(value as u64);
         }
     };
 }
 
-pub struct Album;
+pub struct AlbumModule;
 
-impl Module for Album {
+impl Module for AlbumModule {
     fn name() -> String {
         String::from("albumui")
     }
 
     fn deps() -> Vec<String> {
-        vec![Jsonfetch::name()]
+        vec![JsonfetchModule::name()]
     }
 
     fn run(
-        _global: std::sync::Arc<std::sync::Mutex<serde_json::Value>>,
-        songs: std::sync::Arc<std::sync::Mutex<serde_json::Value>>,
+        _global: Arc<Mutex<Value>>,
+        songs: Arc<Mutex<Value>>,
     ) -> anyhow::Result<()> {
         let mut album = AlbumMetadata::default();
         {
@@ -100,8 +99,7 @@ fn show_album_metadata_ui(album: AlbumMetadata) -> AlbumMetadata {
                 .unwrap();
             let year = s
                 .call_on_name("year", |v: &mut EditView| {
-                    // TODO: Fix crash when no year is entered
-                    v.get_content().parse::<u32>().unwrap()
+                    v.get_content().parse::<u64>().ok()
                 })
                 .unwrap();
             let genre = s
@@ -135,11 +133,7 @@ fn get_album_metadata_layout(album: AlbumMetadata) -> LinearLayout {
         .child(
             EditView::new()
                 .content({
-                    if album.year != 0 {
-                        album.year.to_string()
-                    } else {
-                        String::new()
-                    }
+                    album.year.map(|v| v.to_string()).unwrap_or_default()
                 })
                 .on_edit(|s, t, _| {
                     s.call_on_name("year", |view: &mut EditView| {
@@ -147,7 +141,7 @@ fn get_album_metadata_layout(album: AlbumMetadata) -> LinearLayout {
                             t.chars()
                                 .filter(|c| c.is_ascii_digit())
                                 .take(4)
-                                .collect::<String>()
+                                .collect::<String>(),
                         );
                     });
                 })

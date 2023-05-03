@@ -8,9 +8,9 @@ use serde_json::{Map, Value};
 
 use super::Module;
 
-pub struct Jsonfetch;
+pub struct JsonfetchModule;
 
-impl Module for Jsonfetch {
+impl Module for JsonfetchModule {
     fn name() -> String {
         String::from("fetch_song_info")
     }

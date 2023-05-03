@@ -4,19 +4,16 @@ use cursive::{
     direction::Direction,
     theme::Theme,
     view::Resizable,
-    views::{
-        Button, Dialog, DummyView, LinearLayout, ResizedView, SelectView,
-        TextView,
-    },
+    views::{Button, Dialog, DummyView, LinearLayout, ResizedView, SelectView, TextView},
     Cursive, CursiveExt, View,
 };
 use serde_json::Value;
 
-use crate::modules::jsonfetch::Jsonfetch;
+use crate::modules::jsonfetch::JsonfetchModule;
 
 use self::{
     layout::{get_selectview, get_song_metadata_layout, get_total_tracks_input},
-    util::{get_field_content, song_to_string, compare_songs_by_track_no},
+    util::{compare_songs_by_track_no, get_field_content, song_to_string},
 };
 
 use super::Module;
@@ -26,15 +23,15 @@ use anyhow::Result;
 mod layout;
 mod util;
 
-pub struct TagUI;
+pub struct TagUIModule;
 
-impl Module for TagUI {
+impl Module for TagUIModule {
     fn name() -> String {
         String::from("tagui")
     }
 
     fn deps() -> Vec<String> {
-        vec![Jsonfetch::name()]
+        vec![JsonfetchModule::name()]
     }
 
     fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
@@ -53,7 +50,6 @@ impl Module for TagUI {
         Ok(())
     }
 }
-
 
 // TODO: Move layout stuff to layout.rs and refactor
 pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
@@ -77,14 +73,9 @@ pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
                         get_song_metadata_layout(&songs[0])?,
                     )),
             )
-            .child(
-                get_total_tracks_input(
-                        get_field_content(
-                        &songs[0],
-                        "total_tracks",
-                    ).unwrap_or_default()
-                )
-            )
+            .child(get_total_tracks_input(
+                get_field_content(&songs[0], "total_tracks").unwrap_or_default(),
+            ))
             .child(Button::new("Save", |siv| {
                 let _songs = siv
                     .call_on_name("songlist", |v: &mut SelectView<Value>| {
@@ -114,7 +105,9 @@ fn refresh_songlist(siv: &mut Cursive) {
         refresh_songlist_labels(songlist);
 
         // Find the position of the edited song after the sort
-        let pos = songlist.iter().position(|(_itm, song)| song == sel.as_ref());
+        let pos = songlist
+            .iter()
+            .position(|(_itm, song)| song == sel.as_ref());
         // If the song is found, select it. If not give focus to the SelectView
         if let Some(pos) = pos {
             songlist.set_selection(pos);

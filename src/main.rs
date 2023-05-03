@@ -1,4 +1,5 @@
 #![feature(more_qualified_paths)]
+#![feature(exit_status_error)]
 
 use std::{
     fs,

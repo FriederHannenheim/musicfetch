@@ -20,7 +20,6 @@ pub fn get_field_content(song: &Value, field: &str) -> Result<String> {
     Ok(field_value_str)
 }
 
-
 pub fn song_to_string(song: &Value) -> String {
     match song["songinfo"].get("title") {
         Some(song_name) => song_name,
@@ -30,7 +29,6 @@ pub fn song_to_string(song: &Value) -> String {
     .expect("Failed creating string from song")
     .to_owned()
 }
-
 
 // TODO: This does not need to be a macro. Refactor to functin & rename
 #[macro_export]

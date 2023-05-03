@@ -3,19 +3,19 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::modules::jsonfetch::Jsonfetch;
+use crate::modules::jsonfetch::JsonfetchModule;
 
 use super::Module;
 
-pub struct Songcounter;
+pub struct SongcounterModule;
 
-impl Module for Songcounter {
+impl Module for SongcounterModule {
     fn name() -> String {
         String::from("trackcounter")
     }
 
     fn deps() -> Vec<String> {
-        vec![Jsonfetch::name()]
+        vec![JsonfetchModule::name()]
     }
 
     fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {

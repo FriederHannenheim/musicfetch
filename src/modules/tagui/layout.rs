@@ -9,7 +9,10 @@ use serde_json::Value;
 
 use anyhow::Result;
 
-use crate::{modules::tagui::{refresh_songlist, util::remove_non_numeric_chars}, set_song_field};
+use crate::{
+    modules::tagui::{refresh_songlist, util::remove_non_numeric_chars},
+    set_song_field,
+};
 
 use super::util::{get_field_content, song_to_string};
 
@@ -21,7 +24,11 @@ pub fn get_selectview(songs: &Vec<Value>) -> ResizedView<ScrollView<NamedView<Se
         .zip(songs.clone().into_iter())
         .map(|(label, song)| {
             (
-                format!("{} {}", get_field_content(&song, "track_no").unwrap_or_default(), label),
+                format!(
+                    "{} {}",
+                    get_field_content(&song, "track_no").unwrap_or_default(),
+                    label
+                ),
                 song,
             )
         });
@@ -110,27 +117,22 @@ fn get_edit_view_for_song_field(
 
 // Extensive refactoring has gone into this function to make it as legible as possible. I'm not entirely happy with it yet so feel free to improve it
 pub fn get_song_metadata_layout(first_song: &Value) -> Result<LinearLayout> {
-    let header = 
-        ResizedView::with_fixed_height(
-            3,
-            TextView::new(&song_to_string(first_song))
-                .center()
-                .with_name("title_text"),
+    let header = ResizedView::with_fixed_height(
+        3,
+        TextView::new(&song_to_string(first_song))
+            .center()
+            .with_name("title_text"),
     );
 
-    let title_edit_view = 
-        get_edit_view_for_song_field(
-            first_song,
-            "title",
-            Some(Box::new(
-                |siv: &mut Cursive, text: &str| {
-                    set_song_field!(siv, "title", text.to_string());
-                    // Refresh here to show title changes in the list
-                    refresh_songlist(siv);
-                }
-            )),
-        )
-    ?;
+    let title_edit_view = get_edit_view_for_song_field(
+        first_song,
+        "title",
+        Some(Box::new(|siv: &mut Cursive, text: &str| {
+            set_song_field!(siv, "title", text.to_string());
+            // Refresh here to show title changes in the list
+            refresh_songlist(siv);
+        })),
+    )?;
 
     let year_edit_view =
         get_edit_view_for_song_field(first_song, "year", Some(Box::new(year_edit_callback)))?;
@@ -154,7 +156,10 @@ pub fn get_song_metadata_layout(first_song: &Value) -> Result<LinearLayout> {
 }
 
 pub fn year_edit_callback(siv: &mut Cursive, text: &str) {
-    let year = &remove_non_numeric_chars(text).chars().take(4).collect::<String>();
+    let year = &remove_non_numeric_chars(text)
+        .chars()
+        .take(4)
+        .collect::<String>();
 
     siv.call_on_name("year", |view: &mut EditView| {
         view.set_content(year);
