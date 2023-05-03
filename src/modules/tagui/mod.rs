@@ -3,8 +3,7 @@ use std::sync::{Arc, Mutex};
 use cursive::{
     direction::Direction,
     theme::Theme,
-    view::Resizable,
-    views::{Button, Dialog, DummyView, LinearLayout, ResizedView, SelectView, TextView},
+    views::SelectView,
     Cursive, CursiveExt, View,
 };
 use serde_json::Value;
@@ -13,7 +12,7 @@ use crate::modules::jsonfetch::JsonfetchModule;
 
 use self::{
     dialog::{create_dialog},
-    util::{compare_songs_by_track_no, get_song_field, song_to_string}, song_select::create_song_select_view,
+    util::{compare_songs_by_track_no, get_song_field, song_to_string},
 };
 
 use super::Module;

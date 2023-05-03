@@ -1,7 +1,7 @@
 use cursive::{
-    view::{Nameable, Resizable},
+    view::Resizable,
     views::{
-        DummyView, EditView, LinearLayout, NamedView, ResizedView, SelectView, TextView, Dialog, Button,
+        DummyView, LinearLayout, ResizedView, SelectView, TextView, Dialog, Button,
     },
     Cursive,
 };
@@ -9,11 +9,9 @@ use serde_json::Value;
 
 use anyhow::Result;
 
-use crate::{
-    modules::tagui::{refresh_songlist, util::remove_non_numeric_chars},
-};
 
-use super::{util::{get_song_field, song_to_string, set_song_field}, song_select::create_song_select_view, song_edit::{create_track_no_input, create_song_edit_layout}};
+
+use super::{util::{get_song_field}, song_select::create_song_select_view, song_edit::{create_track_no_input, create_song_edit_layout}};
 
 pub fn create_dialog(songs: &Vec<Value>) -> Result<Dialog> {
 let dialog = Dialog::around(
