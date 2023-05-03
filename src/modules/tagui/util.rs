@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use anyhow::{bail, Result};
 
-use cursive::{Cursive, views::SelectView};
+use cursive::{views::SelectView, Cursive};
 use serde_json::Value;
 
 pub fn get_song_field(song: &Value, field: &str) -> Result<String> {
@@ -12,7 +12,11 @@ pub fn get_song_field(song: &Value, field: &str) -> Result<String> {
             0 => String::new(),
             num => num.to_string(),
         },
-        v => bail!("Invalid Value type in songinfo field {}. Content: {:#}", field, v),
+        v => bail!(
+            "Invalid Value type in songinfo field {}. Content: {:#}",
+            field,
+            v
+        ),
     };
     Ok(field_value_str)
 }
@@ -35,7 +39,6 @@ pub fn song_to_string(song: &Value) -> String {
     .expect("Failed creating string from song")
     .to_owned()
 }
-
 
 pub fn compare_songs_by_track_no(song1: &Value, song2: &Value) -> Ordering {
     let song1_no = song1["songinfo"]

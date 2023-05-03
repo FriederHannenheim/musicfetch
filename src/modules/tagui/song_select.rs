@@ -1,10 +1,15 @@
-use cursive::{views::{ResizedView, SelectView, NamedView, ScrollView, TextView, EditView}, view::{Nameable, Resizable}, Cursive};
+use cursive::{
+    view::{Nameable, Resizable},
+    views::{EditView, NamedView, ResizedView, ScrollView, SelectView, TextView},
+    Cursive,
+};
 use serde_json::Value;
 
-use super::util::{song_to_string, get_song_field};
+use super::util::{get_song_field, song_to_string};
 
-
-pub fn create_song_select_view(songs: &Vec<Value>) -> ResizedView<ScrollView<NamedView<SelectView<Value>>>> {
+pub fn create_song_select_view(
+    songs: &Vec<Value>,
+) -> ResizedView<ScrollView<NamedView<SelectView<Value>>>> {
     let cloned = songs.clone();
     let song_names = cloned.iter().map(|f| song_to_string(f));
 
@@ -29,7 +34,6 @@ pub fn create_song_select_view(songs: &Vec<Value>) -> ResizedView<ScrollView<Nam
     let scroll_view = ScrollView::new(song_selection).fixed_width(32);
     return scroll_view;
 }
-
 
 /// Updates the contents of the edit views to match the song passed
 fn update_edit_views_with_song(s: &mut Cursive, song: &Value) {

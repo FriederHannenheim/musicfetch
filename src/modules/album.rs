@@ -49,10 +49,7 @@ impl Module for AlbumModule {
         vec![JsonfetchModule::name()]
     }
 
-    fn run(
-        _global: Arc<Mutex<Value>>,
-        songs: Arc<Mutex<Value>>,
-    ) -> anyhow::Result<()> {
+    fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> anyhow::Result<()> {
         let mut album = AlbumMetadata::default();
         {
             let songs = songs.lock().unwrap();
@@ -132,9 +129,7 @@ fn get_album_metadata_layout(album: AlbumMetadata) -> LinearLayout {
         .child(TextView::new("Year"))
         .child(
             EditView::new()
-                .content({
-                    album.year.map(|v| v.to_string()).unwrap_or_default()
-                })
+                .content(album.year.map(|v| v.to_string()).unwrap_or_default())
                 .on_edit(|s, t, _| {
                     s.call_on_name("year", |view: &mut EditView| {
                         view.set_content(

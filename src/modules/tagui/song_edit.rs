@@ -1,9 +1,16 @@
-use cursive::{Cursive, views::{EditView, NamedView, LinearLayout, ResizedView, TextView, DummyView}, view::{Nameable, Resizable}};
+use cursive::{
+    view::{Nameable, Resizable},
+    views::{DummyView, EditView, LinearLayout, NamedView, ResizedView, TextView},
+    Cursive,
+};
 use serde_json::Value;
 
 use anyhow::Result;
 
-use super::{util::{get_song_field, set_song_field, song_to_string, remove_non_numeric_chars}, refresh_songlist};
+use super::{
+    refresh_songlist,
+    util::{get_song_field, remove_non_numeric_chars, set_song_field, song_to_string},
+};
 
 fn create_edit_view_for_song_field(
     first_song: &Value,
@@ -60,14 +67,12 @@ pub fn create_song_edit_layout(first_song: &Value) -> Result<LinearLayout> {
         .child(TextView::new("Genre"))
         .child(create_edit_view_for_song_field(first_song, "genre", None)?)
         .child(DummyView.fixed_height(1))
-        .child(
-            create_track_no_input(
-                &get_song_field(first_song, "track_no")?, 
-                "Track No.", 
-                "track_no", 
-                Box::new(|siv, _| refresh_songlist(siv))
-            )?
-        );
+        .child(create_track_no_input(
+            &get_song_field(first_song, "track_no")?,
+            "Track No.",
+            "track_no",
+            Box::new(|siv, _| refresh_songlist(siv)),
+        )?);
     Ok(layout)
 }
 
@@ -83,7 +88,12 @@ pub fn year_edit_callback(siv: &mut Cursive, text: &str) {
     set_song_field(siv, "year", Value::from(year.parse::<u64>().ok()));
 }
 
-pub fn create_track_no_input(content: &str, label: &str, field: &str, on_edit_extra: Box<dyn Fn(&mut Cursive, String)>) -> Result<ResizedView<LinearLayout>> {
+pub fn create_track_no_input(
+    content: &str,
+    label: &str,
+    field: &str,
+    on_edit_extra: Box<dyn Fn(&mut Cursive, String)>,
+) -> Result<ResizedView<LinearLayout>> {
     let _field = field.to_owned();
 
     let layout = LinearLayout::horizontal()
@@ -92,7 +102,7 @@ pub fn create_track_no_input(content: &str, label: &str, field: &str, on_edit_ex
         .child(
             EditView::new()
                 .content(content)
-                .on_edit(move|siv, text, _cursor| {
+                .on_edit(move |siv, text, _cursor| {
                     let value = remove_non_numeric_chars(text);
 
                     siv.call_on_name(&_field, |view: &mut EditView| {

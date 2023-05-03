@@ -1,17 +1,12 @@
 use std::sync::{Arc, Mutex};
 
-use cursive::{
-    direction::Direction,
-    theme::Theme,
-    views::SelectView,
-    Cursive, CursiveExt, View,
-};
+use cursive::{direction::Direction, theme::Theme, views::SelectView, Cursive, CursiveExt, View};
 use serde_json::Value;
 
 use crate::modules::jsonfetch::JsonfetchModule;
 
 use self::{
-    dialog::{create_dialog},
+    dialog::create_dialog,
     util::{compare_songs_by_track_no, get_song_field, song_to_string},
 };
 
@@ -20,9 +15,9 @@ use super::Module;
 use anyhow::Result;
 
 mod dialog;
-mod util;
-mod song_select;
 mod song_edit;
+mod song_select;
+mod util;
 
 pub struct TagUIModule;
 

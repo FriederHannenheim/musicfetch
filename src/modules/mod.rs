@@ -49,5 +49,12 @@ pub fn get_module(
     fn() -> Vec<String>,
     fn(Arc<Mutex<Value>>, Arc<Mutex<Value>>) -> Result<()>,
 )> {
-    match_module!(name, JsonfetchModule, InfocopyModule, AlbumModule, SongcounterModule, TagUIModule)
+    match_module!(
+        name,
+        JsonfetchModule,
+        InfocopyModule,
+        AlbumModule,
+        SongcounterModule,
+        TagUIModule
+    )
 }

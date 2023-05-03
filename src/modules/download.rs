@@ -43,21 +43,23 @@ impl Module for DownloadModule {
             song_json_list = _songs.as_array().unwrap().clone();
 
             let mut _global = global.lock().unwrap();
-            module_config = _global.pointer(&format!("/config/module/{}", Self::name())).map(|v| v.to_owned());
+            module_config = _global
+                .pointer(&format!("/config/module/{}", Self::name()))
+                .map(|v| v.to_owned());
         }
 
         let args = get_yt_dlp_args(module_config);
 
         for song_json in song_json_list {
             let yt_dlp_json = song_json.to_string();
-            
+
             let mut download_process = Command::new("yt-dlp")
                 .args(&args)
                 .arg("--load-info-json")
                 .arg("-")
                 .stdin(Stdio::piped())
                 .spawn()?;
-            
+
             let stdin = download_process
                 .stdin
                 .as_mut()
