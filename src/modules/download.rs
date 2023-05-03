@@ -1,5 +1,4 @@
 use std::{
-    error::Error,
     io::{Read, Write},
     process::{Command, Stdio},
     sync::{Arc, Mutex},
