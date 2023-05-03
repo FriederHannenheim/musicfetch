@@ -2,22 +2,28 @@ use std::cmp::Ordering;
 
 use anyhow::{bail, Result};
 
+use cursive::{Cursive, views::SelectView};
 use serde_json::Value;
 
-pub fn get_field_content(song: &Value, field: &str) -> Result<String> {
-    let Some(field_value) = song["songinfo"].get(field) else {
-        bail!("songinfo has no field {field}")
-    };
-
-    let field_value_str = match field_value {
+pub fn get_song_field(song: &Value, field: &str) -> Result<String> {
+    let field_value_str = match &song["songinfo"][field] {
         Value::String(string) => string.to_owned(),
         Value::Number(number) => match number.as_i64().unwrap() {
             0 => String::new(),
             num => num.to_string(),
         },
-        _ => bail!("Invalid Value type in songinfo field {}", field),
+        v => bail!("Invalid Value type in songinfo field {}. Content: {:#}", field, v),
     };
     Ok(field_value_str)
+}
+
+pub fn set_song_field(siv: &mut Cursive, field: &str, value: Value) {
+    siv.call_on_name("songlist", |v: &mut SelectView<Value>| {
+        let Some(selected) = v.selected_id() else { return; };
+        let Some((_label, song)) = v.get_item_mut(selected) else { return; };
+        song["songinfo"][field] = value;
+    })
+    .unwrap();
 }
 
 pub fn song_to_string(song: &Value) -> String {
@@ -30,18 +36,6 @@ pub fn song_to_string(song: &Value) -> String {
     .to_owned()
 }
 
-// TODO: This does not need to be a macro. Refactor to functin & rename
-#[macro_export]
-macro_rules! set_song_field {
-    ($siv:expr, $field:expr, $content:expr) => {
-        $siv.call_on_name("songlist", |v: &mut SelectView<Value>| {
-            let Some(selected) = v.selected_id() else { return; };
-            let Some((_label, song)) = v.get_item_mut(selected) else { return; };
-            song["songinfo"][$field] = Value::from($content);
-        })
-        .unwrap()
-    };
-}
 
 pub fn compare_songs_by_track_no(song1: &Value, song2: &Value) -> Ordering {
     let song1_no = song1["songinfo"]
