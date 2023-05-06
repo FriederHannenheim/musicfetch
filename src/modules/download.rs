@@ -11,20 +11,15 @@ use serde_json::Value;
 
 use super::Module;
 
-const YT_DLP_ARGS: [&str; 9] = [
+const YT_DLP_ARGS: [&str; 4] = [
     "--ignore-config",
     "-x",
-    "-f",
-    "ba",
-    "--audio-format",
-    "mp3",
-    "--restrict-filenames",
     "-o",
-    "%(title)s.%(ext)s",
+    "%(id)s.%(ext)s",
 ];
 
-struct DownloadModule;
-
+pub struct DownloadModule;
+// TODO: Download to /tmp and threaded download
 impl Module for DownloadModule {
     fn name() -> String {
         String::from("download")
@@ -50,26 +45,41 @@ impl Module for DownloadModule {
 
         let args = get_yt_dlp_args(module_config);
 
+        let mut filenames = vec![];
         for song_json in song_json_list {
-            let yt_dlp_json = song_json.to_string();
+            let yt_dlp_json = song_json["yt_dlp"].to_string();
 
-            let mut download_process = Command::new("yt-dlp")
-                .args(&args)
-                .arg("--load-info-json")
-                .arg("-")
-                .stdin(Stdio::piped())
-                .spawn()?;
+            download(&yt_dlp_json, &args)?;
 
-            let stdin = download_process
-                .stdin
-                .as_mut()
-                .expect("Failed to write to yt-dlp stdin");
-            stdin.write(&yt_dlp_json.as_bytes())?;
-            download_process.wait()?.exit_ok()?;
+            filenames.push(get_downloaded_filename(&yt_dlp_json, &args)?);
+        };
+
+        let mut songs = songs.lock().unwrap();
+        let songs = songs.as_array_mut().unwrap();
+        for (song, filename) in songs.iter_mut().zip(filenames) {
+            song["songinfo"]["filename"] = Value::from(filename);
         }
-
         Ok(())
     }
+}
+
+fn download(yt_dlp_json: &str, args: &Vec<String>) -> Result<()> {
+    let mut download_process = Command::new("yt-dlp")
+        .args(args)
+        .arg("--load-info-json")
+        .arg("-")
+        .stdin(Stdio::piped())
+        .spawn()?;
+
+    let stdin = download_process
+        .stdin
+        .as_mut()
+        .expect("Failed to write to yt-dlp stdin");
+    // If it errors with broken pipe error on this line
+    // it's because you piped the stdout into another process and that process crashed
+    stdin.write(&yt_dlp_json.as_bytes())?;
+    download_process.wait()?.exit_ok()?;
+    Ok(())
 }
 
 fn get_yt_dlp_args(module_config: Option<Value>) -> Vec<String> {
@@ -86,7 +96,7 @@ fn get_yt_dlp_args(module_config: Option<Value>) -> Vec<String> {
     }
 }
 
-fn get_downloaded_filename(yt_dlp_json: &str, args: &Vec<&str>) -> Result<String> {
+fn get_downloaded_filename(yt_dlp_json: &str, args: &Vec<String>) -> Result<String> {
     let mut filename = String::new();
 
     let mut filename_process = Command::new("yt-dlp")
