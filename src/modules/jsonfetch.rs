@@ -8,6 +8,7 @@ use serde_json::{Map, Value};
 
 use super::Module;
 
+// TODO: Implement caching
 pub struct JsonfetchModule;
 
 impl Module for JsonfetchModule {

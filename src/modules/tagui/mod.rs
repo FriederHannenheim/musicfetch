@@ -38,6 +38,8 @@ impl Module for TagUIModule {
 
         let mut songs = songs.lock().unwrap();
 
+
+        // TODO: Quit silently
         *songs = Value::from(
             siv.take_user_data::<Vec<Value>>()
                 .expect("Could not get Cursive user data."),

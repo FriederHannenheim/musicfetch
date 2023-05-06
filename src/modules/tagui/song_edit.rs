@@ -68,11 +68,8 @@ pub fn create_song_edit_layout(first_song: &Value) -> Result<LinearLayout> {
         .child(create_edit_view_for_song_field(first_song, "genre", None)?)
         .child(DummyView.fixed_height(1))
         .child(create_track_no_input(
-            &get_song_field(first_song, "track_no")?,
-            "Track No.",
-            "track_no",
-            Box::new(|siv, _| refresh_songlist(siv)),
-        )?);
+            &get_song_field(first_song, "track_no").unwrap_or_default(),
+        ));
     Ok(layout)
 }
 
@@ -90,31 +87,25 @@ pub fn year_edit_callback(siv: &mut Cursive, text: &str) {
 
 pub fn create_track_no_input(
     content: &str,
-    label: &str,
-    field: &str,
-    on_edit_extra: Box<dyn Fn(&mut Cursive, String)>,
-) -> Result<ResizedView<LinearLayout>> {
-    let _field = field.to_owned();
-
-    let layout = LinearLayout::horizontal()
-        .child(TextView::new(label).max_width(9))
+) -> ResizedView<LinearLayout> {
+    LinearLayout::horizontal()
+        .child(TextView::new("Track No."))
         .child(DummyView.full_width())
         .child(
             EditView::new()
                 .content(content)
                 .on_edit(move |siv, text, _cursor| {
-                    let value = remove_non_numeric_chars(text);
+                    let track_no = remove_non_numeric_chars(text);
 
-                    siv.call_on_name(&_field, |view: &mut EditView| {
-                        view.set_content(&value);
+                    siv.call_on_name("track_no", |view: &mut EditView| {
+                        view.set_content(&track_no);
                     });
-                    set_song_field(siv, &_field, Value::from(value.parse::<u64>().ok()));
+                    set_song_field(siv, "track_no", Value::from(track_no.parse::<u64>().ok()));
 
-                    on_edit_extra(siv, value);
+                    refresh_songlist(siv);
                 })
-                .with_name(field)
+                .with_name("track_no")
                 .fixed_width(8),
         )
-        .fixed_width(11);
-    Ok(layout)
+        .fixed_height(1)
 }

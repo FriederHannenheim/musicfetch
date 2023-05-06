@@ -9,7 +9,7 @@ use super::util::{get_song_field, song_to_string};
 
 pub fn create_song_select_view(
     songs: &Vec<Value>,
-) -> ResizedView<ScrollView<NamedView<SelectView<Value>>>> {
+) -> ScrollView<NamedView<SelectView<Value>>> {
     let cloned = songs.clone();
     let song_names = cloned.iter().map(|f| song_to_string(f));
 
@@ -31,7 +31,7 @@ pub fn create_song_select_view(
         .on_select(update_edit_views_with_song)
         .with_name("songlist");
 
-    let scroll_view = ScrollView::new(song_selection).fixed_width(32);
+    let scroll_view = ScrollView::new(song_selection);
     return scroll_view;
 }
 
