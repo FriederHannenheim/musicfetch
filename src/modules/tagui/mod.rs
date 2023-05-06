@@ -7,7 +7,7 @@ use crate::modules::jsonfetch::JsonfetchModule;
 
 use self::{
     dialog::create_dialog,
-    util::{compare_songs_by_track_no, get_song_field, song_to_string},
+    util::{compare_songs_by_track_no, get_song_field, song_to_string}, song_select::update_edit_views,
 };
 
 use super::Module;
@@ -49,7 +49,6 @@ impl Module for TagUIModule {
     }
 }
 
-// TODO: Move layout stuff to layout.rs and refactor
 pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
     let mut siv = Cursive::default();
 
@@ -60,7 +59,52 @@ pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
 
     siv.add_layer(create_dialog(songs)?);
 
+    add_track_no_callbacks(&mut siv);
+
     Ok(siv)
+}
+
+fn add_track_no_callbacks(siv: &mut Cursive) {
+    siv.add_global_callback('+', |siv| {
+        change_track_no_for_current_song(siv, ChangeType::Relative(1))
+    });
+    siv.add_global_callback('-', |siv| {
+        change_track_no_for_current_song(siv, ChangeType::Relative(-1))
+    });
+    for i in 1..=9 {
+        let num_char = i.to_string().chars().next().unwrap();
+
+        siv.add_global_callback(num_char, move |siv| {
+            change_track_no_for_current_song(siv, ChangeType::Absolute(i))
+        });
+    }
+}
+
+enum ChangeType {
+    Relative(i32),
+    Absolute(i32),
+}
+
+fn change_track_no_for_current_song(siv: &mut Cursive, change: ChangeType) {
+    siv.call_on_name("songlist", |list: &mut SelectView<Value>| {
+        let Some(song) = list.selected_id() else {
+            return;
+        };
+        if let Some((_, song)) = list.get_item_mut(song) {
+            let new_value = match change {
+                ChangeType::Relative(i) => {
+                    let track_no = song["songinfo"]["track_no"].as_u64().unwrap_or(1);
+                    Value::from((track_no as i32 + i).max(0))
+                }
+                ChangeType::Absolute(i) => Value::from(i.max(0))
+            };
+
+            song["songinfo"]["track_no"] = new_value;
+        }
+    });
+    refresh_songlist(siv);
+
+    update_edit_views(siv);
 }
 
 fn refresh_songlist(siv: &mut Cursive) {

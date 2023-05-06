@@ -1,6 +1,6 @@
 use cursive::{
-    view::{Nameable, Resizable},
-    views::{EditView, NamedView, ResizedView, ScrollView, SelectView, TextView},
+    view::Nameable,
+    views::{EditView, NamedView, ScrollView, SelectView, TextView},
     Cursive,
 };
 use serde_json::Value;
@@ -28,23 +28,27 @@ pub fn create_song_select_view(
 
     let song_selection = SelectView::new()
         .with_all(selectview_items)
-        .on_select(update_edit_views_with_song)
+        .on_select(|siv, _| update_edit_views(siv))
         .with_name("songlist");
 
     let scroll_view = ScrollView::new(song_selection);
     return scroll_view;
 }
 
-/// Updates the contents of the edit views to match the song passed
-fn update_edit_views_with_song(s: &mut Cursive, song: &Value) {
-    s.call_on_name("title_text", |v: &mut TextView| {
-        v.set_content(song_to_string(song));
+/// Updates the contents of the edit views to match the song selected
+pub fn update_edit_views(siv: &mut Cursive) {
+    let Some(song) = siv.call_on_name("songlist", |list: &mut SelectView<Value>| {
+        return list.selection()
+    }).unwrap() else { return; };
+
+    siv.call_on_name("title_text", |v: &mut TextView| {
+        v.set_content(song_to_string(&song));
     })
     .unwrap();
 
     for field in ["title", "album", "artist", "year", "genre", "track_no"] {
-        let content = get_song_field(song, field).unwrap_or_default();
-        let result = s.call_on_name(field, |v: &mut EditView| {
+        let content = get_song_field(&song, field).unwrap_or_default();
+        let result = siv.call_on_name(field, |v: &mut EditView| {
             v.set_content(content);
         });
         if result.is_none() {

@@ -1,8 +1,8 @@
 use cursive::{
     view::{Resizable, Nameable},
-    views::{Button, Dialog, DummyView, LinearLayout, ResizedView, SelectView, TextView, EditView}, align::HAlign,
+    views::{Button, Dialog, DummyView, LinearLayout, SelectView, TextView, EditView}, align::HAlign,
 };
-use cursive_aligned_view::{AlignedView, Alignable};
+use cursive_aligned_view::Alignable;
 use serde_json::Value;
 
 use anyhow::Result;
