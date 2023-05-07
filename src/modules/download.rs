@@ -57,7 +57,7 @@ impl Module for DownloadModule {
         let mut songs = songs.lock().unwrap();
         let songs = songs.as_array_mut().unwrap();
         for (song, filename) in songs.iter_mut().zip(filenames) {
-            song["songinfo"]["filename"] = Value::from(filename);
+            song["songinfo"]["path"] = Value::from(filename);
         }
         Ok(())
     }
