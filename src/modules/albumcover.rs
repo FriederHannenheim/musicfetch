@@ -20,7 +20,9 @@ impl Module for AlbumCoverModule {
     }
 
     fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
-        let cover_url = get_cover_url(global);
+        let Some(cover_url) = get_cover_url(global) else {
+            return Ok(());
+        };
 
 
         let resp = minreq::get(cover_url)
@@ -45,9 +47,9 @@ impl Module for AlbumCoverModule {
     }
 }
 
-fn get_cover_url(global: Arc<Mutex<Value>>) -> String {
+fn get_cover_url(global: Arc<Mutex<Value>>) -> Option<String> {
     let global = global.lock().unwrap();
     let global = global.as_object().unwrap();
 
-    global["args"]["cover_url"].as_str().unwrap().to_owned()
+    global["args"]["cover_url"].as_str().map(|c| c.to_owned())
 }

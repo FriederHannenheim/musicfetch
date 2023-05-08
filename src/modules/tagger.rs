@@ -53,7 +53,7 @@ fn tag_song(song: &Value) -> Result<()> {
         tag.set_track(track_no.as_u64().expect("Track No. is not a u64 int") as u32);
     }
     if let Value::Number(total_tracks) = &song["songinfo"]["total_tracks"] {
-        tag.set_track(total_tracks.as_u64().expect("Total Tracks is not a u64 int") as u32);
+        tag.set_track_total(total_tracks.as_u64().expect("Total Tracks is not a u64 int") as u32);
     }
 
     tag.save_to_path(song["songinfo"]["path"].as_str().unwrap())?;

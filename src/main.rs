@@ -31,7 +31,7 @@ fn main() -> Result<()> {
     run_stages(Arc::clone(&global_data), Arc::clone(&song_data));
 
     // println!("{:?}", *global_data.lock().unwrap());
-    println!("{}", song_data.lock().unwrap().to_string());
+    // println!("{}", song_data.lock().unwrap().to_string());
 
     Ok(())
 }

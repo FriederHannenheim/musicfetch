@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Ok, Result};
 use serde_json::Value;
 
-use crate::modules::{album::AlbumModule, songcounter::SongcounterModule, tagui::TagUIModule, download::DownloadModule};
+use crate::modules::{album::AlbumModule, songcounter::SongcounterModule, tagui::TagUIModule, download::DownloadModule, tagger::TagModule, albumcover::AlbumCoverModule};
 
 use self::{infocopy::InfocopyModule, jsonfetch::JsonfetchModule};
 
@@ -58,6 +58,8 @@ pub fn get_module(
         AlbumModule,
         SongcounterModule,
         TagUIModule,
-        DownloadModule
+        DownloadModule,
+        TagModule,
+        AlbumCoverModule
     )
 }
