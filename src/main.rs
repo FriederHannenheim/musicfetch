@@ -14,6 +14,8 @@ use anyhow::Result;
 mod cmdline;
 mod modules;
 
+// TODO: In the config multible versions of a module could be specified with different configs 
+
 fn main() -> Result<()> {
     let config = toml::from_str::<serde_json::Value>(&fs::read_to_string(
         "/home/fried/.config/musicfetch.toml",

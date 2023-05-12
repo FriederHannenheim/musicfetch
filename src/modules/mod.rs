@@ -15,6 +15,7 @@ mod songcounter;
 mod tagui;
 mod tagger;
 mod albumcover;
+mod rename;
 
 // TODO: Rework deps to take Vec<String> and panic if dependencies are not met / return if dependencies met
 pub trait Module {
