@@ -30,6 +30,8 @@ fn main() -> Result<()> {
     let global_data = Arc::new(Mutex::new(Value::from(m)));
     let song_data = Arc::new(Mutex::new(Value::from(Vec::<Value>::new())));
 
+    simple_logger::init().unwrap();
+
     run_stages(Arc::clone(&global_data), Arc::clone(&song_data));
 
     // println!("{:?}", *global_data.lock().unwrap());

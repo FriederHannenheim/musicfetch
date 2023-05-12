@@ -20,3 +20,5 @@ phf = { version = "0.11.1", features = ["macros"] }
 lexopt = "0.3.0"
 anyhow = "1.0"
 infer = "0.13.0"
+simple_logger = "4.1.0"
+log = "0.4.17"
