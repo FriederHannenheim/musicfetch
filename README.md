@@ -1,7 +1,7 @@
 # Musicfetch
 Musicfetch is a tool for downloading music from Youtube and other platforms. It allows you to add metadata to your music which will then be displayed in your music player of choice. 
 
-![License](https://img.shields.io/github/license/FriederHannenheim/Musicfetch)
+![GitHub](https://img.shields.io/github/license/FriederHannenheim/Musicfetch?logo=gnu)
 
 This is the branch for musicfetch >= v1.0. v1.0 was rebuilt from the ground up with massive changes under the hood. Right now it is in it's alpha stage, the core functionality is there but there are still things to be done to make it actually usable. You can try it now by placing the `config_example.toml` under `/etc/musicfetch.toml` and invoking musicfetch with a link to an Album on youtube.
 
