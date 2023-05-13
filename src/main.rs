@@ -20,7 +20,7 @@ mod module_util;
 
 fn main() -> Result<()> {
     let config = toml::from_str::<serde_json::Value>(&fs::read_to_string(
-        "/home/fried/.config/musicfetch.toml",
+        "/etc/musicfetch.toml",
     )?)?;
 
     let mut m = Map::new();

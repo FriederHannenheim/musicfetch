@@ -1,6 +1,15 @@
 # Musicfetch
-### Description
-- Supported Song metadata:
+Musicfetch is a tool for downloading music from Youtube and other platforms. It allows you to add metadata to your music which will then be displayed in your music player of choice. 
+
+![License](https://img.shields.io/github/license/FriederHannenheim/Musicfetch)
+
+This is the branch for musicfetch >= v1.0. v1.0 was rebuilt from the ground up with massive changes under the hood. Right now it is in it's alpha stage, the core functionality is there but there are still things to be done to make it actually usable. You can try it now by placing the `config_example.toml` under `/etc/musicfetch.toml` and invoking musicfetch with a link to an Album on youtube.
+
+In the future, multible configs will be supported. One config could handle downloading individual songs, and another downloading albums or playlists.
+
+The code for versions < v1.0 can be found on the branch `old`
+
+## Supported Song metadata:
     - Title
     - Album Title
     - Artist
@@ -9,13 +18,14 @@
     - Track Number
     - Total Tracks
 
-This crate uses many experimental features because I like living on the edge and thus can only compiled with the nightly toolchain.
+## Compiling
+Select the nightly Rust toolchain and enter `cargo build --release`. To install musicfetch enter `cargo install --path .`
+
 
 ## Notes
 - ID3v1 tags will be automatically upgraded to ID3v2
 
 ## Usage
-
 In the UI for tagging you can use '+' or '-' to increment or decrement the track number of the current song. You can also use number keys 1-9 to set it directly.
 
 ## Dependencies

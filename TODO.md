@@ -2,11 +2,11 @@
 
 man page
 
-# Implement UI fully
-- Total Tracks field
-- Musicfetch banner
+remove nightly features so it can be compiled with the stable toolchain
 
-Musicfetch directory in which the user can put multiple configs. Config can be selected using --config
+Musicfetch banner in tag ui
+
+Musicfetch directory in which the user can put multiple configs. Config can be selected using --config. Configs are able to inherit from eachother. That way configs which only change the settings for a module won't have to include a lot of boilerplate.
 
 ### Ideas for modules:
 - Custom script: Runs a user-specified script which will get the dict passed as json in stdin and needs to return the dict as json in the stdout

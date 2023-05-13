@@ -69,6 +69,7 @@ fn download(yt_dlp_json: &str, args: &Vec<String>) -> Result<()> {
         .arg("--load-info-json")
         .arg("-")
         .stdin(Stdio::piped())
+        .stdout(Stdio::null())
         .spawn()?;
 
     let stdin = download_process
