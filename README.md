@@ -3,7 +3,7 @@ Musicfetch is a tool for downloading music from Youtube and other platforms. It 
 
 ![GitHub](https://img.shields.io/github/license/FriederHannenheim/Musicfetch?logo=gnu)
 
-This is the code for versions < v1.0 can be found on the branch `old`
+This is the code for the rework. Versions < v1.0 can be found on the branch `old`
 
 ## Supported Song metadata:
 - Title
