@@ -5,18 +5,18 @@ Musicfetch is a tool for downloading music from Youtube and other platforms. It 
 
 This is the branch for musicfetch >= v1.0. v1.0 was rebuilt from the ground up with massive changes under the hood. Right now it is in it's alpha stage, the core functionality is there but there are still things to be done to make it actually usable. You can try it now by placing the `config_example.toml` under `/etc/musicfetch.toml` and invoking musicfetch with a link to an Album on youtube.
 
-In the future, multible configs will be supported. One config could handle downloading individual songs, and another downloading albums or playlists.
+In the future, multible configs will be supported. One config could handle downloading individual songs, and another downloading albums or playlists. Check out [TODO.md](TODO.md) for planned features.
 
 The code for versions < v1.0 can be found on the branch `old`
 
 ## Supported Song metadata:
-    - Title
-    - Album Title
-    - Artist
-    - Year released
-    - Genre
-    - Track Number
-    - Total Tracks
+- Title
+- Album Title
+- Artist
+- Year released
+- Genre
+- Track Number
+- Total Tracks
 
 ## Compiling
 Select the nightly Rust toolchain and enter `cargo build --release`. To install musicfetch enter `cargo install --path .`

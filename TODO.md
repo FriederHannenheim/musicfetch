@@ -12,6 +12,7 @@ Musicfetch directory in which the user can put multiple configs. Config can be s
 - Custom script: Runs a user-specified script which will get the dict passed as json in stdin and needs to return the dict as json in the stdout
 - Song select: Remove certain songs that should not be downloaded
 - Discogs / Musicbrainz metadata download
+- A module which auto-detects the album cover for some platforms
 
 ### Other Ideas
 - You can do `--help <module>` to get a description for each module with their settings
