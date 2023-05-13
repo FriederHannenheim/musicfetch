@@ -7,9 +7,11 @@ use serde_json::Value;
 
 use anyhow::Result;
 
+use crate::module_util::song_to_string;
+
 use super::{
     refresh_songlist,
-    util::{get_song_field, remove_non_numeric_chars, set_song_field, song_to_string},
+    util::{get_song_field, remove_non_numeric_chars, set_song_field},
 };
 
 fn create_edit_view_for_song_field(

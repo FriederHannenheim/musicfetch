@@ -2,7 +2,7 @@
 #![feature(exit_status_error)]
 
 use std::{
-    fs,
+    fs::{self, File},
     sync::{Arc, Mutex},
     thread,
 };
@@ -10,9 +10,11 @@ use std::{
 use serde_json::{Map, Value};
 
 use anyhow::Result;
+use simplelog::{WriteLogger, Config};
 
 mod cmdline;
 mod modules;
+mod module_util;
 
 // TODO: In the config multible versions of a module could be specified with different configs 
 
@@ -30,7 +32,7 @@ fn main() -> Result<()> {
     let global_data = Arc::new(Mutex::new(Value::from(m)));
     let song_data = Arc::new(Mutex::new(Value::from(Vec::<Value>::new())));
 
-    simple_logger::init().unwrap();
+    WriteLogger::init(log::LevelFilter::Off, Config::default(),File::create("/tmp/musiclog")?)?;
 
     run_stages(Arc::clone(&global_data), Arc::clone(&song_data));
 

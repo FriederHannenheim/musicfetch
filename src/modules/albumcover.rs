@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use lofty::{Picture, PictureType, MimeType, TagExt};
 use serde_json::Value;
 
-use super::{Module, tagger::get_song_tag};
+use super::{Module, tag_files::get_song_tag};
 
 use anyhow::Result;
 
@@ -21,9 +21,9 @@ impl Module for AlbumCoverModule {
 
     fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
         let Some(cover_url) = get_cover_url(global) else {
+            // No cover url was given, return
             return Ok(());
         };
-
 
         let resp = minreq::get(cover_url)
             .send()

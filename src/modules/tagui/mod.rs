@@ -3,11 +3,11 @@ use std::sync::{Arc, Mutex};
 use cursive::{direction::Direction, theme::Theme, views::SelectView, Cursive, CursiveExt, View};
 use serde_json::Value;
 
-use crate::modules::jsonfetch::JsonfetchModule;
+use crate::{modules::jsonfetch::JsonfetchModule, module_util::song_to_string};
 
 use self::{
     dialog::create_dialog,
-    util::{compare_songs_by_track_no, get_song_field, song_to_string}, song_select::update_edit_views,
+    util::{compare_songs_by_track_no, get_song_field}, song_select::update_edit_views,
 };
 
 use super::Module;
@@ -17,7 +17,7 @@ use anyhow::Result;
 mod dialog;
 mod song_edit;
 mod song_select;
-mod util;
+pub mod util;
 
 pub struct TagUIModule;
 
@@ -49,6 +49,8 @@ impl Module for TagUIModule {
     }
 }
 
+
+// TODO: Prevent saving if there are songs with missing fields
 pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
     let mut siv = Cursive::default();
 
@@ -107,6 +109,8 @@ fn change_track_no_for_current_song(siv: &mut Cursive, change: ChangeType) {
     update_edit_views(siv);
 }
 
+
+// TODO: Highlight Songs with missing fields 
 fn refresh_songlist(siv: &mut Cursive) {
     siv.call_on_name("songlist", |songlist: &mut SelectView<Value>| {
         // Get the currently selected song

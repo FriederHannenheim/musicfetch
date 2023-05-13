@@ -30,16 +30,6 @@ pub fn set_song_field(siv: &mut Cursive, field: &str, value: Value) {
     .unwrap();
 }
 
-pub fn song_to_string(song: &Value) -> String {
-    match song["songinfo"].get("title") {
-        Some(song_name) => song_name,
-        None => &song["yt_dlp"]["title"],
-    }
-    .as_str()
-    .expect("Failed creating string from song")
-    .to_owned()
-}
-
 pub fn compare_songs_by_track_no(song1: &Value, song2: &Value) -> Ordering {
     let song1_no = song1["songinfo"]
         .get("track_no")

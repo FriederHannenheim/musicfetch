@@ -11,7 +11,7 @@ pub struct TagModule;
 
 impl Module for TagModule {
     fn name() -> String {
-        String::from("tagger")
+        String::from("tag_files")
     }
 
     fn deps() -> Vec<String> {

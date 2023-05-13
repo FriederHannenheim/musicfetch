@@ -20,3 +20,6 @@ In the UI for tagging you can use '+' or '-' to increment or decrement the track
 
 ## Dependencies
 - yt-dlp
+
+## Errors Explained
+`Error in module rename:: Song '' has no field '' or field is empty` - The rename module tried inserting a song field into the filename but it was empty. Try running musicfetch again and ensuring that all fields are set

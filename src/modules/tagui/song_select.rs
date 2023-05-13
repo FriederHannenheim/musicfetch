@@ -5,7 +5,9 @@ use cursive::{
 };
 use serde_json::Value;
 
-use super::util::{get_song_field, song_to_string};
+use crate::module_util::song_to_string;
+
+use super::util::get_song_field;
 
 pub fn create_song_select_view(
     songs: &Vec<Value>,
