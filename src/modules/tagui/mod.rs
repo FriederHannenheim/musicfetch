@@ -51,6 +51,7 @@ impl Module for TagUIModule {
 
 
 // TODO: Prevent saving if there are songs with missing fields
+// TODO: Allow going through songs with pgup + pgdown even when the select view is not focused.
 pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
     let mut siv = Cursive::default();
 
