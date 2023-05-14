@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use cursive::{direction::Direction, theme::Theme, views::SelectView, Cursive, CursiveExt, View};
+use cursive::{direction::Direction, theme::Theme, views::SelectView, Cursive, CursiveExt, View, event::{Event, Key}};
 use serde_json::Value;
 
 use crate::{modules::jsonfetch::JsonfetchModule, module_util::song_to_string};
@@ -51,7 +51,6 @@ impl Module for TagUIModule {
 
 
 // TODO: Prevent saving if there are songs with missing fields
-// TODO: Allow going through songs with pgup + pgdown even when the select view is not focused.
 pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
     let mut siv = Cursive::default();
 
@@ -62,17 +61,18 @@ pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
 
     siv.add_layer(create_dialog(songs)?);
 
-    add_track_no_callbacks(&mut siv);
+    add_global_callbacks(&mut siv);
 
     Ok(siv)
 }
 
-fn add_track_no_callbacks(siv: &mut Cursive) {
-    siv.add_global_callback('+', |siv| {
-        change_track_no_for_current_song(siv, ChangeType::Relative(1))
-    });
-    siv.add_global_callback('-', |siv| {
+fn add_global_callbacks(siv: &mut Cursive) {
+    // Callbacks for setting the track_no
+    siv.add_global_callback(Event::Shift(Key::Up), |siv| {
         change_track_no_for_current_song(siv, ChangeType::Relative(-1))
+    });
+    siv.add_global_callback(Event::Shift(Key::Down), |siv| {
+        change_track_no_for_current_song(siv, ChangeType::Relative(1))
     });
     for i in 1..=9 {
         let num_char = i.to_string().chars().next().unwrap();
@@ -81,6 +81,20 @@ fn add_track_no_callbacks(siv: &mut Cursive) {
             change_track_no_for_current_song(siv, ChangeType::Absolute(i))
         });
     }
+
+    // Callbacks for changing selected song anywhere
+    siv.add_global_callback(Event::Key(Key::PageUp), |siv| {
+        let cb = siv.call_on_name("songlist", |list: &mut SelectView<Value>| {
+            list.select_up(1)
+        }).expect("UI Error");
+        cb(siv);
+    });
+    siv.add_global_callback(Event::Key(Key::PageDown), |siv| {
+        let cb = siv.call_on_name("songlist", |list: &mut SelectView<Value>| {
+            list.select_down(1)
+        }).expect("UI Error");
+        cb(siv);
+    });
 }
 
 enum ChangeType {

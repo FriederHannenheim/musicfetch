@@ -22,7 +22,13 @@ This is the branch for musicfetch >= v1.0. v1.0 was rebuilt from the ground up w
 
 You can try it now by placing the `config_example.toml` under `/etc/musicfetch.toml` and invoking musicfetch with a link to an Album on youtube.
 
-In the UI for tagging you can use '+' or '-' to increment or decrement the track number of the current song. You can also use number keys 1-9 to set it directly.
+### UI
+The UI for entering Metadata has been designed to need as few key presses as possible to get to where you want.
+![tagui](images/tagui.png)
+Use the arrow keys to navigate the UI.
+On the left you can select the song you want to edit. In front of the song title, it's track number is shown. Then go to the right and edit the song fields. If you want to quickly switch songs while staying in the same field you can use the PageUp and PageDown keys.
+
+When you change the track number of a song, they will be reordered in the selectview to reflect that change. Use Shift+Up or Shift+Down to increase or decrease the track number for a song. Alternatively, use the number keys 1-9 to set it directly.
 
 ## Dependencies
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
