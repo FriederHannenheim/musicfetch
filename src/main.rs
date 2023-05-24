@@ -7,37 +7,40 @@ use std::{
     thread,
 };
 
+use config::get_config;
 use serde_json::{Map, Value};
 
-use anyhow::Result;
+use anyhow::{Result, Context};
 use simplelog::{WriteLogger, Config};
 
 mod cmdline;
 mod modules;
 mod module_util;
+mod config;
 
 // TODO: In the config multible versions of a module could be specified with different configs 
+// TODO: Allow stages up to 99 with spaces in between, that way stages can be fit in between the inherited order
 
 fn main() -> Result<()> {
-    let config = toml::from_str::<serde_json::Value>(&fs::read_to_string(
-        "/etc/musicfetch.toml",
-    )?)?;
+    WriteLogger::init(log::LevelFilter::Off, Config::default(),File::create("/tmp/musiclog")?)?;
+
+    let args = cmdline::parse_args()?;
+
+    let config_name = args.config.clone().unwrap_or(String::from("default"));
+
+    let config = get_config(&config_name).context("Failed to load config")?;
 
     let mut m = Map::new();
     m.insert(
         String::from("args"),
-        serde_json::to_value(cmdline::parse_args()?)?,
+        serde_json::to_value(args)?,
     );
     m.insert(String::from("config"), config);
     let global_data = Arc::new(Mutex::new(Value::from(m)));
     let song_data = Arc::new(Mutex::new(Value::from(Vec::<Value>::new())));
 
-    WriteLogger::init(log::LevelFilter::Off, Config::default(),File::create("/tmp/musiclog")?)?;
 
     run_stages(Arc::clone(&global_data), Arc::clone(&song_data));
-
-    // println!("{:?}", *global_data.lock().unwrap());
-    // println!("{}", song_data.lock().unwrap().to_string());
 
     Ok(())
 }
