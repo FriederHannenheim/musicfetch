@@ -15,14 +15,9 @@ pub fn get_config(name: &str) -> Result<Value> {
 fn get_config_by_name(name: &str, dir: &PathBuf) -> Result<Value> {
     let file_path = dir.with_file_name(format!("{}.toml", name));
 
-    let config = fs::read_to_string(file_path)?;
-    let mut config = toml::from_str::<Value>(&config)?;
+    let config_string = fs::read_to_string(file_path)?;
+    let config = toml::from_str::<Value>(&config_string)?;
 
-    if let Value::String(parent) = &config["inherit"] {
-        let mut parent_config = get_config_by_name(&parent, dir)?;
-        merge(&mut parent_config, config);
-        config = parent_config;
-    }
     Ok(config)
 }
 
