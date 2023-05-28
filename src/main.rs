@@ -2,7 +2,7 @@
 #![feature(exit_status_error)]
 
 use std::{
-    fs::{self, File},
+    fs::File,
     sync::{Arc, Mutex},
     thread,
 };
@@ -22,7 +22,9 @@ mod config;
 // TODO: Allow stages up to 99 with spaces in between, that way stages can be fit in between the inherited order
 
 fn main() -> Result<()> {
-    WriteLogger::init(log::LevelFilter::Off, Config::default(),File::create("/tmp/musiclog")?)?;
+    WriteLogger::init(log::LevelFilter::Info, Config::default(),File::create("/tmp/musiclog")?)?;
+
+    log::info!("heelp");
 
     let args = cmdline::parse_args()?;
 

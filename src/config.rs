@@ -1,7 +1,8 @@
 use std::{env, path::PathBuf, fs};
 
+use log::info;
 use serde_json::Value;
-use anyhow::{Result, bail};
+use anyhow::{Result, bail, Context};
 
 
 
@@ -9,13 +10,16 @@ pub fn get_config(name: &str) -> Result<Value> {
     let Some(dir) = get_config_dir() else {
         bail!("Failed finding configuration directory");
     };
-    get_config_by_name(name, &dir)
+    get_config_by_name(name, dir)
 }
 
-fn get_config_by_name(name: &str, dir: &PathBuf) -> Result<Value> {
-    let file_path = dir.with_file_name(format!("{}.toml", name));
+fn get_config_by_name(name: &str, dir: PathBuf) -> Result<Value> {
+    let mut file_path = dir;
+    file_path.push(format!("{}.toml", name));
 
-    let config_string = fs::read_to_string(file_path)?;
+    let file_path_string = file_path.clone().to_string_lossy().to_string();
+
+    let config_string = fs::read_to_string(file_path).context(file_path_string)?;
     let config = toml::from_str::<Value>(&config_string)?;
 
     Ok(config)
@@ -23,7 +27,7 @@ fn get_config_by_name(name: &str, dir: &PathBuf) -> Result<Value> {
 
 fn get_config_dir() -> Option<PathBuf> {
     get_user_config_dir()
-        .and(get_global_config_dir())
+        .or_else(get_global_config_dir)
 }
 
 fn get_user_config_dir() -> Option<PathBuf> {
@@ -32,6 +36,7 @@ fn get_user_config_dir() -> Option<PathBuf> {
         path.push("musicfetch");
 
         if path.is_absolute() && path.exists() {
+            info!("Found path using XDG_CONFIG_HOME: {}", path.to_string_lossy());
             return Some(path);
         }
     }
@@ -42,6 +47,7 @@ fn get_user_config_dir() -> Option<PathBuf> {
         path.push("musicfetch");
 
         if path.is_absolute() && path.exists() {
+            info!("Found path using home directory: {}", path.to_string_lossy());
             return Some(path);
         }
     }
@@ -64,24 +70,4 @@ fn get_global_config_dir() -> Option<PathBuf> {
     }
 
     None
-}
-
-/// Merges b into a, values in b override values in a
-fn merge(a: &mut Value, b: Value) {
-    if let Value::Object(a) = a {
-        if let Value::Object(b) = b {
-            for (k, v) in b {
-                if v.is_null() {
-                    a.remove(&k);
-                }
-                else {
-                    merge(a.entry(k).or_insert(Value::Null), v);
-                }
-            } 
-
-            return;
-        }
-    }
-
-    *a = b;
 }
