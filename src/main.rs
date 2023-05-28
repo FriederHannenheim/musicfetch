@@ -24,8 +24,6 @@ mod config;
 fn main() -> Result<()> {
     WriteLogger::init(log::LevelFilter::Info, Config::default(),File::create("/tmp/musiclog")?)?;
 
-    log::info!("heelp");
-
     let args = cmdline::parse_args()?;
 
     let config_name = args.config.clone().unwrap_or(String::from("default"));
