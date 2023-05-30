@@ -2,7 +2,7 @@ use std::sync::{Mutex, Arc};
 
 use lofty::{read_from_path, TaggedFileExt, Tag, Accessor, TagExt};
 use serde_json::Value;
-use crate::modules::download::DownloadModule;
+use crate::{modules::download::DownloadModule, module_util::song_to_string};
 use super::Module;
 use anyhow::Result;
 
@@ -62,7 +62,7 @@ fn tag_song(song: &Value) -> Result<()> {
 }
 
 pub fn get_song_tag(song: &Value) -> Result<Tag> {
-    let mut tagged_file = read_from_path(song["songinfo"]["path"].as_str().expect("song has no filename"))?;
+    let mut tagged_file = read_from_path(song["songinfo"]["path"].as_str().expect(&format!("song '{}' has no path", song_to_string(song))))?;
             
     let tag = match tagged_file.primary_tag_mut() {
         Some(primary_tag) => primary_tag,

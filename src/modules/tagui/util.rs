@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use anyhow::{bail, Result};
 
 use cursive::{views::SelectView, Cursive};
-use serde_json::Value;
+use serde_json::{Value, Map};
 
 pub fn get_song_field(song: &Value, field: &str) -> Result<String> {
     let field_value_str = match &song["songinfo"][field] {
@@ -45,4 +45,18 @@ pub fn compare_songs_by_track_no(song1: &Value, song2: &Value) -> Ordering {
 /// Removes all non-numeric characters from a String
 pub fn remove_non_numeric_chars(string: &str) -> String {
     string.chars().filter(|c| c.is_ascii_digit()).collect()
+}
+
+pub fn merge_b_into_a(a: &mut Map<String, Value>, b: Map<String, Value>) {
+    for (key, b_value) in b.into_iter() {
+        if let Some(mut a_value) = a.get_mut(&key) {
+            if let (Value::Object(a_obj), Value::Object(b_obj)) = (&mut a_value, &b_value) {
+                merge_b_into_a(a_obj, b_obj.clone());
+            } else {
+                *a_value = b_value;
+            }
+        } else {
+            a.insert(key, b_value);
+        }
+    }
 }

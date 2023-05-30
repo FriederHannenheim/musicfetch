@@ -1,18 +1,19 @@
 use std::sync::{Arc, Mutex};
 
 use cursive::{direction::Direction, theme::Theme, views::SelectView, Cursive, CursiveExt, View, event::{Event, Key}};
+use log::info;
 use serde_json::Value;
 
 use crate::{modules::jsonfetch::JsonfetchModule, module_util::song_to_string};
 
 use self::{
     dialog::create_dialog,
-    util::{compare_songs_by_track_no, get_song_field}, song_select::update_edit_views,
+    util::{compare_songs_by_track_no, get_song_field, merge_b_into_a}, song_select::update_edit_views,
 };
 
 use super::Module;
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 
 mod dialog;
 mod song_edit;
@@ -37,13 +38,21 @@ impl Module for TagUIModule {
             .expect("TUI initialization failed. Try using another Terminal");
 
         let mut songs = songs.lock().unwrap();
-
+        let songs = songs.as_array_mut().unwrap();
 
         // TODO: Quit silently
-        *songs = Value::from(
+        let new_songs = Value::from(
             siv.take_user_data::<Vec<Value>>()
                 .expect("Could not get Cursive user data."),
         );
+        let new_songs = new_songs.as_array().unwrap();
+
+        for (song, new_song) in songs.iter_mut().zip(new_songs.iter()) {
+            let song_obj = song.as_object_mut().expect("Song is not an Object, this is an Error.");
+            let new_song_obj = new_song.as_object().expect("Song is not an Object, this is an Error.");
+
+            merge_b_into_a(song_obj, new_song_obj.clone());
+        }
 
         Ok(())
     }
