@@ -58,9 +58,8 @@ fn create_total_tracks_input(initial_value: &str) -> LinearLayout {
                     });
                     
                     siv.call_on_name("songlist", |list: &mut SelectView<Value>| {
-                        let Ok(total_tracks) = total_tracks.parse::<u64>() else { return; };
                         for (_lbl, song) in list.iter_mut() {
-                            song["total_tracks"] = Value::from(total_tracks);
+                            song["total_tracks"] = Value::from(total_tracks.parse::<u64>().ok());
                         }
                     });
                 })
