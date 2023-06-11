@@ -72,6 +72,8 @@ fn get_filename_for_song(name_template: &str, song: &Value) -> Result<String> {
 
         filename = filename.replace(matched_string, &value);
     }
+    filename = filename.replace("/", "_");
+
     Ok(filename)
 }
 
