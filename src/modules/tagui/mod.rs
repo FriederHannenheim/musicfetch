@@ -13,7 +13,7 @@ use self::{
 
 use super::Module;
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 
 mod dialog;
 mod song_edit;

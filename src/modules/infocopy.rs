@@ -22,7 +22,7 @@ impl Module for InfocopyModule {
     // TODO: Allow using regex with captures to copy only parts of strings
     fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
         let global = global.lock().unwrap();
-        let infocopy_settings = global["config"]["stages"]
+        let infocopy_settings = global["config"]["module"]
             .get("infocopy")
             .expect("Module infocopy has no settings")
             .as_object()

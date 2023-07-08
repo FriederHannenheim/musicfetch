@@ -1,0 +1,45 @@
+
+# This specifies the stages and modules musicfetch will run.
+# Stages are run in parallel so be careful not to introduce any 
+# race conditions by including too many modules in one stage.
+[stages]
+stage1 = ["fetch_song_info"]
+stage2 = ["infocopy"]
+stage3 = [
+    "albumui",
+    "trackcounter"
+]
+stage4 = [
+    "tagui",
+    "download"
+]
+stage5 = [
+    "tag_files",
+    "albumcover"
+]
+stage6 = ["rename"]
+
+
+# Infocopy copies values from the yt-dlp json to the songinfo
+[module.infocopy]
+title = "track"
+album = "album"
+artist = "artist"
+
+[module.rename]
+# Template for filepaths. Can include paths to folders. These should be absolute, environment variables and '~' are not parsed.
+# Variables can be entered like this %(name)
+# Available variables:
+# %(title)        - Song Title
+# %(album)        - Album Name
+# %(artist)       - Artist Name
+# %(genre)        - Genre
+# %(year)         - Release year
+# %(track_no)     - Track Number
+# %(total_tracks) - Total Tracks in Album
+template = "%(title).%(ext)"
+
+[module.download]
+# Extra arguments to give to yt-dlp. For example ['--audio-format', 'mp3'] if you want to download everything as mp3
+yt_dlp_args = []
+

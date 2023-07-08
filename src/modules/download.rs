@@ -84,7 +84,8 @@ fn download(yt_dlp_json: &str, args: &Vec<String>) -> Result<()> {
 }
 
 fn get_yt_dlp_args(module_config: Option<Value>) -> Vec<String> {
-    match module_config.and_then(|v| v["yt_dlp_args"].as_array().map(|v| v.to_owned())) {
+    let mut args = YT_DLP_ARGS.map(|s| s.to_owned()).to_vec();
+    let mut extra_args = match module_config.and_then(|v| v["yt_dlp_args"].as_array().map(|v| v.to_owned())) {
         Some(v) => v
             .into_iter()
             .map(|v| {
@@ -93,8 +94,10 @@ fn get_yt_dlp_args(module_config: Option<Value>) -> Vec<String> {
                     .to_owned()
             })
             .collect(),
-        None => YT_DLP_ARGS.map(|s| s.to_owned()).to_vec(),
-    }
+        None => vec![],
+    };
+    args.append(&mut extra_args);
+    args
 }
 
 fn get_downloaded_filename(yt_dlp_json: &str, args: &Vec<String>) -> Result<String> {

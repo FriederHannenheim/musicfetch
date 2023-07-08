@@ -1,16 +1,48 @@
-use std::{env, path::PathBuf, fs};
+use std::{env, path::PathBuf, fs::{self, create_dir_all, File}, io::Write};
 
+use home::home_dir;
 use log::info;
 use serde_json::Value;
 use anyhow::{Result, bail, Context};
 
-
+const DEFAULT_CONFIG: &'static[u8] = include_bytes!("../config/default.toml");
 
 pub fn get_config(name: &str) -> Result<Value> {
-    let Some(dir) = get_config_dir() else {
-        bail!("Failed finding configuration directory");
+    let dir = match get_config_dir() {
+        Some(dir) => dir,
+        None => {
+            eprintln!("Failed to find musicfetch config dir. Creating default config...");
+            create_default_config()?
+        }
     };
     get_config_by_name(name, dir)
+}
+
+fn create_default_config() -> Result<PathBuf> {
+    let mut config_dir = match env::var("XDG_CONFIG_HOME") {
+        Ok(dir) => PathBuf::from(dir),
+        Err(_) => {
+            match home_dir() {
+                Some(mut dir) => {
+                    dir.push(".config");
+                    dir
+                },
+                None => bail!("Failed to find config directory")
+            }
+        }
+    };
+    config_dir.push("musicfetch");
+    
+    create_dir_all(&config_dir)?;
+
+    let mut config_path = config_dir.clone();
+    config_path.push("default.toml");
+
+    let mut config_file = File::create(&config_path)?;
+
+    config_file.write(DEFAULT_CONFIG)?;
+
+    Ok(config_dir)
 }
 
 fn get_config_by_name(name: &str, dir: PathBuf) -> Result<Value> {
@@ -41,8 +73,7 @@ fn get_user_config_dir() -> Option<PathBuf> {
         }
     }
 
-    if let Ok(home_dir) = env::var("HOME") {
-        let mut path = PathBuf::from(home_dir);
+    if let Some(mut path) = home_dir() {
         path.push(".config");
         path.push("musicfetch");
 
