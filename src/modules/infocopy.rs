@@ -4,49 +4,40 @@ use serde_json::Value;
 
 use anyhow::{bail, Ok, Result};
 
-use crate::modules::jsonfetch::JsonfetchModule;
+use crate::{
+    define_module,
+    modules::{self, ModuleStruct},
+};
 
-use super::Module;
+define_module!("infocopy", run, [modules::jsonfetch::MODULE_NAME]);
 
-pub struct InfocopyModule;
+// TODO: Allow using regex with captures to copy only parts of strings
+fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
+    let global = global.lock().unwrap();
+    let infocopy_settings = global["config"]["module"]
+        .get("infocopy")
+        .expect("Module infocopy has no settings")
+        .as_object()
+        .expect("Infocopy settings is not a object")
+        .clone();
+    drop(global);
 
-impl Module for InfocopyModule {
-    fn name() -> String {
-        String::from("infocopy")
-    }
+    let mut songs = songs.lock().unwrap();
+    let songs = songs.as_array_mut().unwrap();
 
-    fn deps() -> Vec<String> {
-        vec![JsonfetchModule::name()]
-    }
+    for song in songs {
+        for (key, value) in &infocopy_settings {
+            let Some(yt_dlp_key) = value.as_str() else {
+                bail!("Map key for {} is not a string", key)
+            };
 
-    // TODO: Allow using regex with captures to copy only parts of strings
-    fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
-        let global = global.lock().unwrap();
-        let infocopy_settings = global["config"]["module"]
-            .get("infocopy")
-            .expect("Module infocopy has no settings")
-            .as_object()
-            .expect("Infocopy settings is not a object")
-            .clone();
-        drop(global);
+            let Some(yt_dlp_value) = song["yt_dlp"].get(yt_dlp_key) else {
+                continue;
+            };
 
-        let mut songs = songs.lock().unwrap();
-        let songs = songs.as_array_mut().unwrap();
-
-        for song in songs {
-            for (key, value) in &infocopy_settings {
-                let Some(yt_dlp_key) = value.as_str() else {
-                    bail!("Map key for {} is not a string", key)
-                };
-
-                let Some(yt_dlp_value) = song["yt_dlp"].get(yt_dlp_key) else {
-                    continue;
-                };
-
-                song["songinfo"][key] = yt_dlp_value.clone();
-            }
+            song["songinfo"][key] = yt_dlp_value.clone();
         }
-
-        Ok(())
     }
+
+    Ok(())
 }

@@ -1,11 +1,16 @@
-use std::{env, path::PathBuf, fs::{self, create_dir_all, File}, io::Write};
+use std::{
+    env,
+    fs::{self, create_dir_all, File},
+    io::Write,
+    path::PathBuf,
+};
 
+use anyhow::{bail, Context, Result};
 use home::home_dir;
 use log::info;
 use serde_json::Value;
-use anyhow::{Result, bail, Context};
 
-const DEFAULT_CONFIG: &'static[u8] = include_bytes!("../config/default.toml");
+const DEFAULT_CONFIG: &[u8] = include_bytes!("../config/default.toml");
 
 pub fn get_config(name: &str) -> Result<Value> {
     let dir = match get_config_dir() {
@@ -21,18 +26,16 @@ pub fn get_config(name: &str) -> Result<Value> {
 fn create_default_config() -> Result<PathBuf> {
     let mut config_dir = match env::var("XDG_CONFIG_HOME") {
         Ok(dir) => PathBuf::from(dir),
-        Err(_) => {
-            match home_dir() {
-                Some(mut dir) => {
-                    dir.push(".config");
-                    dir
-                },
-                None => bail!("Failed to find config directory")
+        Err(_) => match home_dir() {
+            Some(mut dir) => {
+                dir.push(".config");
+                dir
             }
-        }
+            None => bail!("Failed to find config directory"),
+        },
     };
     config_dir.push("musicfetch");
-    
+
     create_dir_all(&config_dir)?;
 
     let mut config_path = config_dir.clone();
@@ -40,7 +43,7 @@ fn create_default_config() -> Result<PathBuf> {
 
     let mut config_file = File::create(&config_path)?;
 
-    config_file.write(DEFAULT_CONFIG)?;
+    config_file.write_all(DEFAULT_CONFIG)?;
 
     Ok(config_dir)
 }
@@ -58,8 +61,7 @@ fn get_config_by_name(name: &str, dir: PathBuf) -> Result<Value> {
 }
 
 fn get_config_dir() -> Option<PathBuf> {
-    get_user_config_dir()
-        .or_else(get_global_config_dir)
+    get_user_config_dir().or_else(get_global_config_dir)
 }
 
 fn get_user_config_dir() -> Option<PathBuf> {
@@ -68,7 +70,10 @@ fn get_user_config_dir() -> Option<PathBuf> {
         path.push("musicfetch");
 
         if path.is_absolute() && path.exists() {
-            info!("Found path using XDG_CONFIG_HOME: {}", path.to_string_lossy());
+            info!(
+                "Found path using XDG_CONFIG_HOME: {}",
+                path.to_string_lossy()
+            );
             return Some(path);
         }
     }
@@ -78,7 +83,10 @@ fn get_user_config_dir() -> Option<PathBuf> {
         path.push("musicfetch");
 
         if path.is_absolute() && path.exists() {
-            info!("Found path using home directory: {}", path.to_string_lossy());
+            info!(
+                "Found path using home directory: {}",
+                path.to_string_lossy()
+            );
             return Some(path);
         }
     }
@@ -92,7 +100,7 @@ fn get_global_config_dir() -> Option<PathBuf> {
 
     if path.exists() {
         return Some(path);
-    }    
+    }
 
     let path = PathBuf::from("/usr/share/musicfetch");
 

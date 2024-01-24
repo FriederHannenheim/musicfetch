@@ -9,9 +9,12 @@ use cursive::{
 };
 use serde_json::Value;
 
-use crate::modules::jsonfetch::JsonfetchModule;
+use crate::{
+    define_module,
+    modules::{self, ModuleStruct},
+};
 
-use super::Module;
+define_module!("albumui", run, [modules::jsonfetch::MODULE_NAME]);
 
 #[derive(Default)]
 struct AlbumMetadata {
@@ -31,52 +34,44 @@ macro_rules! get_value_if_exists {
     ($metadata_key:expr, $key:expr, $song:ident, $conversion:ident) => {
         if let Value::Number(value) = &$song["songinfo"][$key] {
             let Some(value) = value.$conversion() else {
-                bail!("Error in songinfo for {}: {} value is not a unsigned integer", $song["yt_dlp"][$key], $key);
+                bail!(
+                    "Error in songinfo for {}: {} value is not a unsigned integer",
+                    $song["yt_dlp"][$key],
+                    $key
+                );
             };
             $metadata_key = Some(value as u64);
         }
     };
 }
 
-pub struct AlbumModule;
-
-impl Module for AlbumModule {
-    fn name() -> String {
-        String::from("albumui")
-    }
-
-    fn deps() -> Vec<String> {
-        vec![JsonfetchModule::name()]
-    }
-
-    fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> anyhow::Result<()> {
-        let mut album = AlbumMetadata::default();
-        {
-            let songs = songs.lock().unwrap();
-            let songs = songs.as_array().unwrap();
-
-            for song in songs {
-                get_value_if_exists!(album.title, "album", song);
-                get_value_if_exists!(album.artist, "artist", song);
-                get_value_if_exists!(album.year, "year", song, as_u64);
-                get_value_if_exists!(album.genre, "genre", song);
-            }
-        }
-
-        let metadata = show_album_metadata_ui(album);
-
-        let mut songs = songs.lock().unwrap();
-        let songs = songs.as_array_mut().unwrap();
+fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> anyhow::Result<()> {
+    let mut album = AlbumMetadata::default();
+    {
+        let songs = songs.lock().unwrap();
+        let songs = songs.as_array().unwrap();
 
         for song in songs {
-            song["songinfo"]["album"] = Value::from(metadata.title.clone());
-            song["songinfo"]["artist"] = Value::from(metadata.artist.clone());
-            song["songinfo"]["year"] = Value::from(metadata.year);
-            song["songinfo"]["genre"] = Value::from(metadata.genre.clone());
+            get_value_if_exists!(album.title, "album", song);
+            get_value_if_exists!(album.artist, "artist", song);
+            get_value_if_exists!(album.year, "year", song, as_u64);
+            get_value_if_exists!(album.genre, "genre", song);
         }
-
-        Ok(())
     }
+
+    let metadata = show_album_metadata_ui(album);
+
+    let mut songs = songs.lock().unwrap();
+    let songs = songs.as_array_mut().unwrap();
+
+    for song in songs {
+        song["songinfo"]["album"] = Value::from(metadata.title.clone());
+        song["songinfo"]["artist"] = Value::from(metadata.artist.clone());
+        song["songinfo"]["year"] = Value::from(metadata.year);
+        song["songinfo"]["genre"] = Value::from(metadata.genre.clone());
+    }
+
+    Ok(())
 }
 
 fn show_album_metadata_ui(album: AlbumMetadata) -> AlbumMetadata {

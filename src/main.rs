@@ -7,19 +7,23 @@ use std::{
 use config::get_config;
 use serde_json::{Map, Value};
 
-use anyhow::{Result, Context};
-use simplelog::{WriteLogger, Config};
+use anyhow::{Context, Result};
+use simplelog::{Config, WriteLogger};
 
 mod cmdline;
-mod modules;
-mod module_util;
 mod config;
+mod module_util;
+mod modules;
 
-// TODO: In the config multible versions of a module could be specified with different configs 
+// TODO: In the config multible versions of a module could be specified with different configs
 // TODO: Allow stages up to 99 with spaces in between, that way stages can be fit in between the inherited order
 
 fn main() -> Result<()> {
-    WriteLogger::init(log::LevelFilter::Info, Config::default(),File::create("/tmp/musiclog")?)?;
+    WriteLogger::init(
+        log::LevelFilter::Info,
+        Config::default(),
+        File::create("/tmp/musiclog")?,
+    )?;
 
     let args = cmdline::parse_args()?;
 
@@ -28,14 +32,10 @@ fn main() -> Result<()> {
     let config = get_config(&config_name).context("Failed to load config")?;
 
     let mut m = Map::new();
-    m.insert(
-        String::from("args"),
-        serde_json::to_value(args)?,
-    );
+    m.insert(String::from("args"), serde_json::to_value(args)?);
     m.insert(String::from("config"), config);
     let global_data = Arc::new(Mutex::new(Value::from(m)));
     let song_data = Arc::new(Mutex::new(Value::from(Vec::<Value>::new())));
-
 
     run_stages(Arc::clone(&global_data), Arc::clone(&song_data));
 
@@ -55,18 +55,18 @@ pub fn run_stages(global_data: Arc<Mutex<Value>>, song_data: Arc<Mutex<Value>>) 
 
         let mut handles = vec![];
 
-        let stage_modules = stage
+        let stage_module_names = stage
             .as_array()
             .unwrap()
             .iter()
             .map(|v| v.as_str().unwrap().to_owned());
 
-        for module in stage_modules.clone() {
-            let module_fn = modules::get_module(&module).unwrap();
+        for module_name in stage_module_names.clone() {
+            let module = modules::get_module(&module_name).unwrap();
 
-            for dependency in module_fn.0() {
+            for dependency in module.deps {
                 if !modules_ran.contains(&dependency) {
-                    panic!("Module {module} depends on {dependency} but it hasn't run. Please move {dependency} to an earlier stage.");
+                    panic!("Module {module_name} depends on {dependency} but it hasn't run. Please move {dependency} to an earlier stage.");
                 }
             }
 
@@ -74,7 +74,8 @@ pub fn run_stages(global_data: Arc<Mutex<Value>>, song_data: Arc<Mutex<Value>>) 
             let _songs = Arc::clone(&song_data);
 
             let handle = thread::spawn(move || {
-                module_fn.1(_global, _songs).expect(&format!("Error in module {}:", module))
+                (module.run_function)(_global, _songs)
+                    .unwrap_or_else(|_| panic!("Error in module {}:", module_name))
             });
             handles.push(handle);
         }
@@ -84,8 +85,8 @@ pub fn run_stages(global_data: Arc<Mutex<Value>>, song_data: Arc<Mutex<Value>>) 
         }
 
         modules_ran.append(
-            &mut stage_modules
-                .map(|s| String::from(s))
+            &mut stage_module_names
+                .map(String::from)
                 .collect::<Vec<String>>(),
         );
 

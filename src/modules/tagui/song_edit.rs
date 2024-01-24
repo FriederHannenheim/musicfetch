@@ -17,7 +17,7 @@ use super::{
 fn create_edit_view_for_song_field(
     first_song: &Value,
     field: &str,
-    on_edit_alt: Option<Box<dyn Fn(&mut Cursive, &str) -> ()>>,
+    on_edit_alt: Option<Box<dyn Fn(&mut Cursive, &str)>>,
 ) -> Result<NamedView<EditView>> {
     let cloned_field = field.to_owned();
 
@@ -37,7 +37,7 @@ fn create_edit_view_for_song_field(
 pub fn create_song_edit_layout(first_song: &Value) -> Result<LinearLayout> {
     let header = ResizedView::with_fixed_height(
         3,
-        TextView::new(&song_to_string(first_song))
+        TextView::new(song_to_string(first_song))
             .center()
             .with_name("title_text"),
     );
@@ -87,9 +87,7 @@ pub fn year_edit_callback(siv: &mut Cursive, text: &str) {
     set_song_field(siv, "year", Value::from(year.parse::<u64>().ok()));
 }
 
-pub fn create_track_no_input(
-    content: &str,
-) -> ResizedView<LinearLayout> {
+pub fn create_track_no_input(content: &str) -> ResizedView<LinearLayout> {
     LinearLayout::horizontal()
         .child(TextView::new("Track No."))
         .child(DummyView.full_width())

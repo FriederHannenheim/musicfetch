@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use anyhow::Result;
 use cursive::{
     direction::Direction,
     event::{Event, Key},
@@ -9,7 +10,11 @@ use cursive::{
 };
 use serde_json::Value;
 
-use crate::{module_util::song_to_string, modules::jsonfetch::JsonfetchModule};
+use crate::{
+    define_module,
+    module_util::song_to_string,
+    modules::{self, ModuleStruct},
+};
 
 use self::{
     dialog::create_dialog,
@@ -17,55 +22,41 @@ use self::{
     util::{compare_songs_by_track_no, get_song_field, merge_b_into_a},
 };
 
-use super::Module;
-
-use anyhow::Result;
-
 mod dialog;
 mod song_edit;
 mod song_select;
 pub mod util;
 
-pub struct TagUIModule;
+define_module!("tagui", run, [modules::jsonfetch::MODULE_NAME]);
 
-impl Module for TagUIModule {
-    fn name() -> String {
-        String::from("tagui")
+fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
+    let mut siv = init_cursive(Arc::clone(&songs))?;
+
+    siv.run_crossterm()
+        .expect("TUI initialization failed. Try using another Terminal");
+
+    let mut songs = songs.lock().unwrap();
+    let songs = songs.as_array_mut().unwrap();
+
+    // TODO: Quit silently
+    let new_songs = Value::from(
+        siv.take_user_data::<Vec<Value>>()
+            .expect("Could not get Cursive user data."),
+    );
+    let new_songs = new_songs.as_array().unwrap();
+
+    for (song, new_song) in songs.iter_mut().zip(new_songs.iter()) {
+        let song_obj = song
+            .as_object_mut()
+            .expect("Song is not an Object, this is an Error.");
+        let new_song_obj = new_song
+            .as_object()
+            .expect("Song is not an Object, this is an Error.");
+
+        merge_b_into_a(song_obj, new_song_obj.clone());
     }
 
-    fn deps() -> Vec<String> {
-        vec![JsonfetchModule::name()]
-    }
-
-    fn run(_global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
-        let mut siv = init_cursive(Arc::clone(&songs))?;
-
-        siv.run_crossterm()
-            .expect("TUI initialization failed. Try using another Terminal");
-
-        let mut songs = songs.lock().unwrap();
-        let songs = songs.as_array_mut().unwrap();
-
-        // TODO: Quit silently
-        let new_songs = Value::from(
-            siv.take_user_data::<Vec<Value>>()
-                .expect("Could not get Cursive user data."),
-        );
-        let new_songs = new_songs.as_array().unwrap();
-
-        for (song, new_song) in songs.iter_mut().zip(new_songs.iter()) {
-            let song_obj = song
-                .as_object_mut()
-                .expect("Song is not an Object, this is an Error.");
-            let new_song_obj = new_song
-                .as_object()
-                .expect("Song is not an Object, this is an Error.");
-
-            merge_b_into_a(song_obj, new_song_obj.clone());
-        }
-
-        Ok(())
-    }
+    Ok(())
 }
 
 // TODO: Prevent saving if there are songs with missing fields
