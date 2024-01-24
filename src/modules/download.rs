@@ -6,7 +6,7 @@ use std::{
 
 use crate::modules::jsonfetch::JsonfetchModule;
 
-use anyhow::Result;
+use anyhow::{Result, Error};
 use serde_json::Value;
 
 use super::Module;
@@ -79,7 +79,9 @@ fn download(yt_dlp_json: &str, args: &Vec<String>) -> Result<()> {
     // If it errors with broken pipe error on this line
     // it's because you piped the stdout into another process and that process crashed
     stdin.write(&yt_dlp_json.as_bytes())?;
-    download_process.wait()?.exit_ok()?;
+    if !download_process.wait()?.success() {
+        return Err(Error::msg("something went wrong with yt-dlp"));
+    }
     Ok(())
 }
 
@@ -121,9 +123,7 @@ fn get_downloaded_filename(yt_dlp_json: &str, args: &Vec<String>) -> Result<Stri
         .take()
         .expect("Failed to capture yt-dlp stdout");
     filename_process
-        .wait()?
-        .exit_ok()
-        .expect("Failed to get filename of downloaded file");
+        .wait()?;
     stdout.read_to_string(&mut filename)?;
 
     return Ok(filename.trim().to_owned());

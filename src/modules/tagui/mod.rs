@@ -1,14 +1,20 @@
 use std::sync::{Arc, Mutex};
 
-use cursive::{direction::Direction, theme::Theme, views::SelectView, Cursive, CursiveExt, View, event::{Event, Key}};
-use log::info;
+use cursive::{
+    direction::Direction,
+    event::{Event, Key},
+    theme::Theme,
+    views::SelectView,
+    Cursive, CursiveExt, View,
+};
 use serde_json::Value;
 
-use crate::{modules::jsonfetch::JsonfetchModule, module_util::song_to_string};
+use crate::{module_util::song_to_string, modules::jsonfetch::JsonfetchModule};
 
 use self::{
     dialog::create_dialog,
-    util::{compare_songs_by_track_no, get_song_field, merge_b_into_a}, song_select::update_edit_views,
+    song_select::update_edit_views,
+    util::{compare_songs_by_track_no, get_song_field, merge_b_into_a},
 };
 
 use super::Module;
@@ -48,8 +54,12 @@ impl Module for TagUIModule {
         let new_songs = new_songs.as_array().unwrap();
 
         for (song, new_song) in songs.iter_mut().zip(new_songs.iter()) {
-            let song_obj = song.as_object_mut().expect("Song is not an Object, this is an Error.");
-            let new_song_obj = new_song.as_object().expect("Song is not an Object, this is an Error.");
+            let song_obj = song
+                .as_object_mut()
+                .expect("Song is not an Object, this is an Error.");
+            let new_song_obj = new_song
+                .as_object()
+                .expect("Song is not an Object, this is an Error.");
 
             merge_b_into_a(song_obj, new_song_obj.clone());
         }
@@ -57,7 +67,6 @@ impl Module for TagUIModule {
         Ok(())
     }
 }
-
 
 // TODO: Prevent saving if there are songs with missing fields
 pub fn init_cursive(songs: Arc<Mutex<Value>>) -> Result<Cursive> {
@@ -93,15 +102,17 @@ fn add_global_callbacks(siv: &mut Cursive) {
 
     // Callbacks for changing selected song anywhere
     siv.add_global_callback(Event::Key(Key::PageUp), |siv| {
-        let cb = siv.call_on_name("songlist", |list: &mut SelectView<Value>| {
-            list.select_up(1)
-        }).expect("UI Error");
+        let cb = siv
+            .call_on_name("songlist", |list: &mut SelectView<Value>| list.select_up(1))
+            .expect("UI Error");
         cb(siv);
     });
     siv.add_global_callback(Event::Key(Key::PageDown), |siv| {
-        let cb = siv.call_on_name("songlist", |list: &mut SelectView<Value>| {
-            list.select_down(1)
-        }).expect("UI Error");
+        let cb = siv
+            .call_on_name("songlist", |list: &mut SelectView<Value>| {
+                list.select_down(1)
+            })
+            .expect("UI Error");
         cb(siv);
     });
 }
@@ -122,7 +133,7 @@ fn change_track_no_for_current_song(siv: &mut Cursive, change: ChangeType) {
                     let track_no = song["songinfo"]["track_no"].as_u64().unwrap_or(1);
                     Value::from((track_no as i32 + i).max(0))
                 }
-                ChangeType::Absolute(i) => Value::from(i.max(0))
+                ChangeType::Absolute(i) => Value::from(i.max(0)),
             };
 
             song["songinfo"]["track_no"] = new_value;
@@ -133,8 +144,7 @@ fn change_track_no_for_current_song(siv: &mut Cursive, change: ChangeType) {
     update_edit_views(siv);
 }
 
-
-// TODO: Highlight Songs with missing fields 
+// TODO: Highlight Songs with missing fields
 fn refresh_songlist(siv: &mut Cursive) {
     siv.call_on_name("songlist", |songlist: &mut SelectView<Value>| {
         // Get the currently selected song
