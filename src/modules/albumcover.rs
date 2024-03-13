@@ -24,7 +24,7 @@ fn run(global: Arc<Mutex<Value>>, songs: Arc<Mutex<Value>>) -> Result<()> {
 
     let picture = Picture::new_unchecked(
         PictureType::CoverFront,
-        MimeType::from_str(kind.mime_type()),
+        Some(MimeType::from_str(kind.mime_type())),
         None,
         resp.into_bytes(),
     );
