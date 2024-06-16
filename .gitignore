@@ -1,4 +1,5 @@
 /target
+/result
 url
 playlist_json
 workdir_for_testing
