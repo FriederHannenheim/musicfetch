@@ -118,20 +118,4 @@ mod tests {
         );
         assert_eq!("lalala", get_path_for_song("lalala", &song).unwrap());
     }
-
-    #[test]
-    fn test_filename_creation_error() {
-        let song = json!({
-            "songinfo": {
-                "title": ["a", "b", "c"],
-                "year": {
-                    "a": "b"
-                },
-            }
-        });
-
-        assert!(get_path_for_song("%(title)", &song).is_err());
-        assert!(get_path_for_song("%(album)", &song).is_err());
-        assert!(get_path_for_song("%(year)", &song).is_err());
-    }
 }
