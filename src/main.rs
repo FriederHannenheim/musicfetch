@@ -75,7 +75,7 @@ pub fn run_stages(global_data: Arc<Mutex<Value>>, song_data: Arc<Mutex<Value>>) 
 
             let handle = thread::spawn(move || {
                 (module.run_function)(_global, _songs)
-                    .unwrap_or_else(|_| panic!("Error in module {}:", module_name))
+                    .expect(&format!("Error in module {module_name}"));
             });
             handles.push(handle);
         }
